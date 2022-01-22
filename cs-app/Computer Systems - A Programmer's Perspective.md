@@ -8,33 +8,33 @@
 ## Chapter 1 - A Tour of Computer Systems
 All information in a system is just bits. The only thing that distinguishes them is the context in which we view them. A text file is still just bits, but a "text file" is a file of bits that only correspond to text. 
 
-## Compilation
+### Compilation
 Compilers transform source into *executable object programs|files*. Four stages:
 1. *Preprocessing* - Macros, includes, etc are bundled into a single text file, `.i`
 2. *Compilation* - Translates the `.i` into assembly text file `.s`. Useful as a common language between different languages & processors.
 3. *Assembly* - Translates the assembled file into machine language binary file known as a *relocatable object program*, `.o`.
 4. *Linking* - Merges other object files referred to by included headers into a single executable.
 
-## Elements of a machine
+### Elements of a machine
 *Shells*: A command-line interpreter
 
-### Hardware
-#### Buses
+#### Hardware
+##### Buses
 - Electrical conduits that carry bytes between components.
 - Typically designed to transfer fixed-sized chunks of bytes known as `words`.
 - The number of bytes in a word (word size) is a fundamental system parameter that varies across systems.
         - Most systems have a word size of 4 bytes (32 bit) or 8 bytes (64 bit).
 
-#### I/O
+##### I/O
 - Each I/O device is connected to the I/O bus by either a *controller* or *adapter*.
         - Controllers are built-in (to either the motherboard or the device), adapters are separate cards that plug into the motherboard.
-#### Main memory
+##### Main memory
 - Temporary storage for data used by the program.
 - Physically a collection of dynamic random access memory (DRAM).
 - Logically, memory is organized as a linear array of bytes, each with its own unique address (array index) starting at zero.
 - The size of various C data types (short, etc) vary depending on machine type (x86-64, etc).
 
-#### Processor
+##### Processor
 Executes instructions stored in main memory. At its core is a word-size storage device (a register) called the program counter. At any point the PC points at (container the address of) some machine-language instruction in main memory. For the duration of the time the CPU has power it will execute the instruction pointed to by the program counter and updates the PC to point to the next instruction.
 
 Appears to operate according to a simple model defined by its *instruction set architecture*. In this model, instructions are executed in a strict sequence.
@@ -54,7 +54,7 @@ CPUs appear simple, but actually they have a lot of complex mechanisms to speed 
 
 *DMA: Direct memory access* - Data travels direct from disk into ram, bypassing the CPU.
 
-##### Performance:
+###### Performance:
 A lot of the slow down in processing is the overhead of moving data from disk to memory to registers to display devices. So a lot of effort is put into increasing the efficiency of the I/O. Due to physical laws, the smaller the device the faster they are.
 
 Storage performance:
@@ -78,7 +78,7 @@ There's a processor-memory gap: it's easier and cheaper to make processors faste
 - L0 is registers.
 - *Main idea*: each level acts as cache for the layer below.
 
-#### Operating system:
+##### Operating system:
 Layer of software interposed between apps and hardware. All attempts to manipulate hardware must go through OS.
 
 It has 2 purposes:
@@ -121,14 +121,14 @@ The OS does this by some fundamental abstractions:
 - Networks
         - From the POV of a process, the network can be viewed as another I/O device.
 
-##### Amdhal's law
+###### Amdhal's law
 A speed up of a part of system is dependent on how significant that part is to the overall system; its fraction of the overall time it takes to run the operation. So a 6x speed up for a part of the system that is 50% responsible is only 3x in the end.
 
-#### Concurrency & parallelism
+##### Concurrency & parallelism
 *Concurrency*: general concept of a system with multiple, simultaneous activities.
 *Parallelism*: the use of concurrency to make a system faster.
 
-##### Types of concurrency
+###### Types of concurrency
 1. Thread-level:
         - We get thread-level currency in a single process, even though its simulated.
         - Multi-core systems
