@@ -1512,7 +1512,7 @@ Generally:
 
 Each system has a unique memory mountain that characterizes the capabilities of its memory system. It can be understood by running a function that varies the number (size) of elements to retrieve from an array (temporal locality) vs the stride (spatial locality) used to iterate. The output from a function like that is below:
 
-![[./images/Screen Shot 2022-01-03 at 7.30.47 PM.png]]
+![](./images/locality-mountain.png)
 
 Ridges on the mountain the L1,2,3 caches that are used when the requested set of data fits in cache (temporal locality - time to fetch the data). The slopes between the ridges are spatial locality that gradually increases as we increase stride.
 
@@ -2522,7 +2522,7 @@ The Internet is one of the most successful examples of government, university, a
 ## 11.4 Sockets Interface
 The *sockets interface* is a set of functions that used in conjunction with Unix I/o to build network apps. Implemented on all modern systems.
 
-![[Screen Shot 2022-01-14 at 6.14.44 PM.png]]
+![](./images/sockets-interface.png)
 *Overview of network apps based on sockets interface*
 
 **Note: `_in` just means internet, not input**.
@@ -2788,7 +2788,7 @@ Remember in assembly, there are multiple instructions used to update a register:
 ### Process graphs
 We can consider the progression of two concurrent threads through their instruction trajectory using a n-dimensional *process graph*, where n is the number of threads. Each axis `k` refers to the progress of some thread `k`. The origin of the graph is the initial state.
 
-![[Screen Shot 2022-01-16 at 1.34.58 PM.png]]
+![](./images/process-graph.png)
 
 A directed edge from on point to an adjacent point represents a transition from one state in a thread to another. Note that as we can only run a single instruction at a time, diagonal transitions are not allowed.
 
@@ -2796,7 +2796,7 @@ A thread's execution trajectory may include sections that constitute a *critical
 
 The intersection of two critical sections on a process graph is called the *unsafe region*. A safe trajectory is one that moves through process execution without entering this region.
 
-![[Screen Shot 2022-01-16 at 1.40.44 PM.png]]
+![](./images/process-graph-unsafe-region.png)
 
 ### Semaphores
 A special global variable `s` with a nonnegative interger value that can only be manipulated by two special operations:
@@ -2815,7 +2815,7 @@ The definitions of P and V ensure a program can never enter a state where a prop
 
 With the semaphore controlling the execution of threads, the process graph now has `-1` as the state that would be required to access the unsafe region, but due to the definition of P and V, it's logically impossible to end up there. The semaphore operations ensure mutually exclusive access to the critical region.
 
-![[Screen Shot 2022-01-16 at 1.56.50 PM.png]]
+![](./images/process-graph-forbidden-region.png)
 
 ### Semaphores to schedule shared resources
 Beyond mutual exclusion, semaphores can be used to schedule access to a shared resource.
