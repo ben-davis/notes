@@ -4,11 +4,12 @@
 1. Two's compliment and its effect on the possible arithmetic
 2. Logical/arithmetic bit shifting, especially in relationship to the integer encoding used.
 
+
 ## Chapter 1 - A Tour of Computer Systems
 - All information in a system is just bits. The only thing that distinguishes them is the context in which we view them. A text file is still just bits, but a "text file" is a file of bits that only correspond to text. 
 - Compilers transform source into *executable object programs|files*. 
 	- Four stages:
-		1. Preprocessing - Macros, includes, etc are bundled into a single text file, `.i`
+                1. Preprocessing - Macros, includes, etc are bundled into a single text file, `.i`
 		2. Compilation - Translates the `.i` into assembly text file `.s`. Useful as a common language between different languages & processors.
 		3. Assembly - Translate the assembled file into machine language binary file known as a *relocatable object program*, `.o`.
 		4. Linking - Merges other object files referred to by included headers into a single executable.
@@ -733,7 +734,7 @@ while (test-expr) {
 	update-expr;
 }
 ```
--
+
 	- So for loops are implemented with one of the while methods above.
 	
 #### 3.6.8 Switch Statements
@@ -849,7 +850,7 @@ Often, with data types like structs, the natural layout of data could result in 
 ### 3.10 Combining Control and Data in Machine-Level Programs
 
 #### 3.10.1 Understanding Pointers
-- Every pointer has a type (malloc returns a generic pointer  `void*`)
+- Every pointer has a type (malloc returns a generic pointer  `void`)
 - Every pointer has a value (except NULL(0) which indicates it points nowhere).
 - Pointers are created with &
 - Pointers are dereferenced with *
@@ -1511,7 +1512,7 @@ Generally:
 
 Each system has a unique memory mountain that characterizes the capabilities of its memory system. It can be understood by running a function that varies the number (size) of elements to retrieve from an array (temporal locality) vs the stride (spatial locality) used to iterate. The output from a function like that is below:
 
-![[Screen Shot 2022-01-03 at 7.30.47 PM.png]]
+![[./images/Screen Shot 2022-01-03 at 7.30.47 PM.png]]
 
 Ridges on the mountain the L1,2,3 caches that are used when the requested set of data fits in cache (temporal locality - time to fetch the data). The slopes between the ridges are spatial locality that gradually increases as we increase stride.
 
@@ -2933,7 +2934,7 @@ Semaphores introduce a nasty runtime error called a *deadlock*, where a collecti
 
 When two threads use two mutexes for mutual exclusion it's possible for them to end up in a state where they are each waiting for the other to release their lock (calling *V*). The process graph for a program that has the feature will have a *deadlock region*, a region that if entered will cause the program to deadlock.
 
-![[Screen Shot 2022-01-16 at 7.07.01 PM.png]]
+!(test)[./images/Screen Shot 2022-01-16 at 7.07.01 PM.png]
 
 It's especially difficult as it's not always predictable; it entirely depends on the scheduling done via the OS.
 
