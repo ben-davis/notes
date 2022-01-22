@@ -2934,7 +2934,7 @@ Semaphores introduce a nasty runtime error called a *deadlock*, where a collecti
 
 When two threads use two mutexes for mutual exclusion it's possible for them to end up in a state where they are each waiting for the other to release their lock (calling *V*). The process graph for a program that has the feature will have a *deadlock region*, a region that if entered will cause the program to deadlock.
 
-![[./images/deadlock.png]]
+![](./images/deadlock.png)
 
 It's especially difficult as it's not always predictable; it entirely depends on the scheduling done via the OS.
 
