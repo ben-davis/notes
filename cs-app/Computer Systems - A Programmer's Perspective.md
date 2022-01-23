@@ -318,103 +318,118 @@ We can use the four boolean operations to operate on bit vectors, strings of 0s 
 
 ### 2.2 Integer Representations
 #### 2.2.2 Unsigned encoding
-- Each bit $x_i$ has value 0 or 1. The latter indicates that $2^i$ should be included as a part of the numeric value, i.e. it contributes to it. So if the number is [1001], the number is 2^3 + 2^0 = 9.
-	- So for vector x, the binary to unsigned is defined as the sum of $2^i$ for $x_i$.
-- Max range for $w$ is defined as the sum of $2^i$ for i through the range $i=0$ to $i=w - 1$. Which simplifies to $2^w - 1$.
-- Unsigned binary representation has the important property that every number between 0 - $2^w - 1$ has a unique encoding as a w-bit value.
-	- Which is said to be a mathematical `bijection` meaning that it's two way: reversible.
+Each bit $x_i$ has value 0 or 1. The latter indicates that $2^i$ should be included as a part of the numeric value, i.e. it contributes to it. So if the number is [1001], the number is 2^3 + 2^0 = 9. So for vector x, the binary to unsigned is defined as the sum of $2^i$ for $x_i$.
+
+Max range for $w$ is defined as the sum of $2^i$ for i through the range $i=0$ to $i=w - 1$. Which simplifies to $2^w - 1$.
+
+Unsigned binary representation has the important property that every number between 0 - $2^w - 1$ has a unique encoding as a w-bit value. Which is said to be a mathematical `bijection` meaning that it's two way: reversible.
 
 #### 2.2.3 Two's-Complement Encoding
-- Allows us to support negative numbers.
-- The most significant bit is called the `sign bit`. Its "weight" is  $-2^{w-1}$, the negation of its weight in unsigned representation.
-	- When the bit is set to 1, the represented value is negative, when set to 0 the value is non-negative
-- The rest of the numbers are the same as the unsigned. It's the sign bit that either zeroes out (in the case of positive integer) or is equal to -2*sum-of-of-the-rest. Due to it being raised to +1 exponent and made negative.
-- The least representable integer is [1 0 0 .. 0 0] = $-2^{w-1}$, the most is [0 1 1 ... 1 1] = $2^{w-1} - 1$.
-- Two's complement is also a `bijection`.
-- Two's complement is asymmetrical: there's no positive counterpart to TMin.
-	- This happens because half the bit patterns represent negative numbers and half represent positive numbers. Since 0 is positive, we have asymmetry.
+Allows us to support negative numbers.
+
+The most significant bit is called the `sign bit`. Its "weight" is  $-2^{w-1}$, the negation of its weight in unsigned representation. When the bit is set to 1, the represented value is negative, when set to 0 the value is non-negative
+
+- The rest of the numbers are the same as the unsigned. It's the sign bit that either zeroes out (in the case of positive integer) or is equal to -2 x sum-of-of-the-rest. Due to it being raised to +1 exponent and made negative.
+
+The least representable integer is [1 0 0 .. 0 0] = $-2^{w-1}$, the most is [0 1 1 ... 1 1] = $2^{w-1} - 1$.
+
+1. Two's complement is also a `bijection`.
+2. Two's complement is asymmetrical: there's no positive counterpart to TMin. This happens because half the bit patterns represent negative numbers and half represent positive numbers. Since 0 is positive, we have asymmetry.
 
 #### 2.2.4 Conversions between signed and unsigned
-- Generally when casting in C the bits are kept the same, but the interpretation changes.
-- There are general relationships between the same bit patterns in unsigned and two's complement. Not bothering to write them down here.
+Generally when casting in C the bits are kept the same, but the interpretation changes.
+
+There are general relationships between the same bit patterns in unsigned and two's complement. Not bothering to write them down here.
 
 #### 2.2.5 Signed and unsigned in C
-- There's some implicit casting when making comparisons in C expressions: signed is implicitly cast to unsigned.
+There's some implicit casting when making comparisons in C expressions: signed is implicitly cast to unsigned.
 
 #### 2.2.6 Expanding the bit representation of a number
-- To convert an unsigned number to a larger data type, we can add leading zeroes to the representation: known as *zero extension*.
-- To convert two's complement: we add copies of the most significant bit.
+To convert an unsigned number to a larger data type, we can add leading zeroes to the representation: known as *zero extension*.
+
+To convert two's complement: we add copies of the most significant bit.
 
 #### 2.2.8 Advice 
-- Most languages don't have unsigned as they're more trouble than they're worth. Comparisons don't work how you'd expect, etc.
-	- Unsigned arithmetic is equivalent to modular addition.
-- C is pretty much the only language that supports them
-	- Actually that is not true: rust does. Seemingly because addresses are unsigned so it makes sense.
+Most languages don't have unsigned as they're more trouble than they're worth. Comparisons don't work how you'd expect, etc.
+- Unsigned arithmetic is equivalent to modular addition.
+
+C is pretty much the only language that supports them
+- Actually that is not true: rust does. Seemingly because addresses are unsigned so it makes sense.
 
 ### 2.3 Integer Arithmetic
 #### 2.3.1 Unsigned Addition
-- The issue with addition is that if you have two integers, both of which can be represented by w-bit unsigned number, then their addition could require w + 1 bits. If you sum this results with another, then you've got w + 2 bits.
-- This is called "word size inflation",  and unless restricted could mean that we take up an arbitrary amount of memory, which presumably would require lots of dynamic resizing of the words of memory used to store the number.
-	- Lisp allows for this, but most languages put in a limit with fixed-sized arithmetic.
-- Unsigned addition requires discarding any bits that have overflowed the bit size determined by the data type. This is essentially results in the result being mod [max number that can be stored in the data type + 1]. So for a 4-bit number (which has a max of 15), if the sum was 21, then the result would be 21 mod 16 = 5.
-	- Which is essentially decrementing the number by $2^w$. So 4-bit = $2^4$ = 16.
-	- Overflow happens when the result is more than $2^w$.
-	- We can detect if the result overflowed if its less than either of the operands.
+The issue with addition is that if you have two integers, both of which can be represented by w-bit unsigned number, then their addition could require w + 1 bits. If you sum this results with another, then you've got w + 2 bits.
+
+This is called "word size inflation", and unless restricted could mean that we take up an arbitrary amount of memory, which presumably would require lots of dynamic resizing of the words of memory used to store the number.
+
+Lisp allows for this, but most languages put in a limit with fixed-sized arithmetic.
+
+Unsigned addition requires discarding any bits that have overflowed the bit size determined by the data type. This is essentially results in the result being mod [max number that can be stored in the data type + 1]. So for a 4-bit number (which has a max of 15), if the sum was 21, then the result would be 21 mod 16 = 5.
+
+Which is essentially decrementing the number by $2^w$. So 4-bit = $2^4$ = 16. Overflow happens when the result is more than $2^w$. We can detect if the result overflowed if its less than either of the operands.
 
 #### 2.3.2 Two's-Complement Addition
-- Similar to above, but taking into account negative overflow as well as positive overflow.
-- The way the math works out is that for:
-	- Negative overflow: add $2^w$
-	- Positive overflow: subtract $2^w$
-- Detectable for positive overflow if x > 0 and y > 0 but s <= 0
-- Detectable for negative overflow if x < 0 and y < 0 but s >= 0
+Similar to above, but taking into account negative overflow as well as positive overflow.
+
+The way the math works out is that for:
+- Negative overflow: add $2^w$
+- Positive overflow: subtract $2^w$
+
+1. Detectable for positive overflow if x > 0 and y > 0 but s <= 0
+2. Detectable for negative overflow if x < 0 and y < 0 but s >= 0
 
 #### 2.3.4 Unsigned Multiplication
-- Integers x and y in the range $0 <= x, y <= 2^w - 1$ can be represented by as w-bit unsigned numbers, but their product can be between 0 and $(2^w -1)^2 = 2^{2w} - 2^{w + 1} + 1$.
-- This could require as many as 2w bits to represent.
-- So C truncates to the lower-order w bits of the 2w-but integer product.
-	- $(x*y) mod 2^w$.
+Integers x and y in the range $0 <= x, y <= 2^w - 1$ can be represented by as w-bit unsigned numbers, but their product can be between 0 and $(2^w -1)^2 = 2^{2w} - 2^{w + 1} + 1$.
+
+This could require as many as 2w bits to represent. So C truncates to the lower-order w bits of the 2w-but integer product.
+- `$(x*y) mod 2^w$`.
 
 
 #### 2.3.5 Two's-Complement Multiplication
-- Again it truncates the same way as unsigned.
+Again it truncates the same way as unsigned.
 
 
 #### 2.3.6 Multiplying by constants
-- Addition, subtraction, bit-level operations, and shifting all require 1 clock cycle.
-- Multiplication (on i7 from 2015) takes 3 clock cycles.
-	- Therefore an optimization made by compilers is to replace multiplications with constant factors with combinations of shift and addition operations.
+Addition, subtraction, bit-level operations, and shifting all require 1 clock cycle.
+
+Multiplication (on i7 from 2015) takes 3 clock cycles. Therefore an optimization made by compilers is to replace multiplications with constant factors with combinations of shift and addition operations.
+
 - Examples:
 	- Multiplication by a power of 2:
 		- $x2^k$
 		- Shift x $k$ bits to the left, replacing with k zeroes.
-- So in order to more effectively use this a compiler might replace `x*14`, knowing that its the same as `14 = 2^3 + 2^2 + 2^1`, with:
-	- `(x<<3) + (x<<2) + (x<<1)`.
-	- Which can be simplified to
-	- `(x<<4) - (x<<1)`.
-	- Although I suppose it'll still make that determination knowing how difficult it is for the given machine to do multiplication.
-- This all assumes that the right side of the multiplication is a known constant: either a literal or a const.
+
+So in order to more effectively use this a compiler might replace `x*14`, knowing that its the same as `14 = 2^3 + 2^2 + 2^1`, with:
+- `(x<<3) + (x<<2) + (x<<1)`.
+- Which can be simplified to
+- `(x<<4) - (x<<1)`.
+- Although I suppose it'll still make that determination knowing how difficult it is for the given machine to do multiplication.
+
+This all assumes that the right side of the multiplication is a known constant: either a literal or a const.
 
 
 #### 2.3.7 Dividing by powers of 2
-- Integer division is even slower.
-- You can do the same as multiplication, but with a right shift instead of left shift.
+Integer division is even slower. You can do the same as multiplication, but with a right shift instead of left shift.
 
 
 #### 2.3.8 Thoughts on integer arithmetic
-- "integer" arithmetic is really just modular arithmetic due to the inherent limitations of fixed word sizes.
-- Modular arithmetic is just where integers wrap around beyond a modulus. A 12 hour clock is modular arithmetic.
-- Same bit-level arithmetic operations such as addition, subtraction, etc are used on twos-complement as are used on unsigned.
+"integer" arithmetic is really just modular arithmetic due to the inherent limitations of fixed word sizes.
+
+Modular arithmetic is just where integers wrap around beyond a modulus. A 12 hour clock is modular arithmetic.
+
+Same bit-level arithmetic operations such as addition, subtraction, etc are used on twos-complement as are used on unsigned.
 
 ### 2.4 Floating Point
-- All computers now use the standard known as IEEE floating point. Prior to this every chip maker would have their own standard.
-- Decimal notation for fractions:
-	- $12.34_{10}$ = $1 * 10^1 + 2 * 10^0 + 3 * 10^{-1} + 4 * 10^{-2} = 12\frac{34}{100}$
-	- So the digits to the left of the "decimal point" are weighted by nonnegative powers of 10, while digits to the right are weight by negative powers of 10.
-- For binary:
-	- It's the same idea:
-	- Bits to the left of the "binary point" are weighted by nonnegative powers of 2, while digits to the right are weight by negative powers of 2.
-- So with that we can represent any fraction as a fractional decimal number in a fractional binary decimal number.
+All computers now use the standard known as IEEE floating point. Prior to this every chip maker would have their own standard.
+
+Decimal notation for fractions:
+- $12.34_{10}$ = $1 * 10^1 + 2 * 10^0 + 3 * 10^{-1} + 4 * 10^{-2} = 12\frac{34}{100}$
+- So the digits to the left of the "decimal point" are weighted by nonnegative powers of 10, while digits to the right are weight by negative powers of 10.
+
+For binary it's the same idea:
+- Bits to the left of the "binary point" are weighted by nonnegative powers of 2, while digits to the right are weight by negative powers of 2.
+
+So with that we can represent any fraction as a fractional decimal number in a fractional binary decimal number.
 - Assuming we only have finite-length encodings, 1/3 cannot be represented exactly.
 - We must therefore decide on a binary precision.
 - To convert between decimal fractions to binary fractions:
@@ -452,28 +467,32 @@ There three cases of point representation:
 
 
 #### 2.4.4 Rounding
-- IEEE gives 4 rounding modes. Default is to find the closest match. While the other three can be used to find upper and lower bounds.
-	- Round-to-even (default): i.e. round to nearest integer where the least significant digit is even. It "prefers" even.
-		- We can do this for binary fractions too: just consider the least significant bit 0 to be even and 1 to be odd.
-	- Round-toward-zero: positive numbers down, negative numbers up. "towards zero".
-	- Round-down
-	- Round-up
+IEEE gives 4 rounding modes. Default is to find the closest match. While the other three can be used to find upper and lower bounds.
+
+1. Round-to-even (default): i.e. round to nearest integer where the least significant digit is even. It "prefers" even.
+        - We can do this for binary fractions too: just consider the least significant bit 0 to be even and 1 to be odd.
+2. Round-toward-zero: positive numbers down, negative numbers up. "towards zero".
+3. Round-down
+4. Round-up
 
 #### 2.4.5 Floating-point operations
-- Floating point ops are commutative (order doesn't matter) but not commutative (parentheses do matter). This is because an operation loses precision, so the result of applying it to one parenthetical group is not the same as one of the operands with another.
-- This means generally compilers are very conservative when optimizing floats. 
+Floating point ops are commutative (order doesn't matter) but not associative (parentheses do matter). This is because an operation loses precision, so the result of applying it to one parenthetical group is not the same as one of the operands with another.
+
+This means generally compilers are very conservative when optimizing floats. 
 
 ### 2.5 Summary
-- Computers encode information as bits, generally organized as sequences of bytes.
-- Different encodings are used for representing integers, real numbers, and character strings.
-- Different computers = different conventions of encodings.
-- Most machines encode signed numbers using two's complement and floating point using IEEE Standard 754.
-- Finite length of encodings means arithmetic in a computer is quite different to real arithmetic.
-	- This can cause numbers to overflow
-	- It can cause floats to collapse to zero when they are super close.
-	- This leads to oddities like x*x resulting in a negative number due to overflow.
-- Unsigned and two's complement satisfy many of the characteristics of real integer arithmetic, like associativity, commutativity, and distributivity. That allows compilers to do many optimizations like the power of 2 trick.
-- Basically there are lots of bit-level operations that due to their relations to arithmetic operations can be exploited to get performance.
+Computers encode information as bits, generally organized as sequences of bytes. Different encodings are used for representing integers, real numbers, and character strings. Different computers = different conventions of encodings.
+
+Most machines encode signed numbers using two's complement and floating point using IEEE Standard 754.
+
+Finite length of encodings means arithmetic in a computer is quite different to real arithmetic.
+- This can cause numbers to overflow
+- It can cause floats to collapse to zero when they are super close.
+- This leads to oddities like `x*x` resulting in a negative number due to overflow.
+
+Unsigned and two's complement satisfy many of the characteristics of real integer arithmetic, like associativity, commutativity, and distributivity. That allows compilers to do many optimizations like the power of 2 trick.
+
+**Basically there are lots of bit-level operations that due to their relations to arithmetic operations can be exploited to get performance.**
 
 ## Chapter 3 Machine-Level Representation of Programs
 
