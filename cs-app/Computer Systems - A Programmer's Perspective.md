@@ -10,13 +10,13 @@ All information in a system is just bits. The only thing that distinguishes them
 
 ### Compilation
 Compilers transform source into *executable object programs|files*. Four stages:
-1. *Preprocessing* - Macros, includes, etc are bundled into a single text file, `.i`
-2. *Compilation* - Translates the `.i` into assembly text file `.s`. Useful as a common language between different languages & processors.
-3. *Assembly* - Translates the assembled file into machine language binary file known as a *relocatable object program*, `.o`.
-4. *Linking* - Merges other object files referred to by included headers into a single executable.
+1. **Preprocessing** - Macros, includes, etc are bundled into a single text file, `.i`
+2. **Compilation** - Translates the `.i` into assembly text file `.s`. Useful as a common language between different languages & processors.
+3. **Assembly** - Translates the assembled file into machine language binary file known as a *relocatable object program*, `.o`.
+4. **Linking** - Merges other object files referred to by included headers into a single executable.
 
 ### Elements of a machine
-*Shells*: A command-line interpreter
+**Shells**: A command-line interpreter
 
 #### Hardware
 ##### Buses
@@ -41,8 +41,8 @@ Appears to operate according to a simple model defined by its *instruction set a
 
 There are only a few of these simple operations and they revolve around main memory, the register file, and the arithmetic/logic unit (ALU).
 
-*Register file*: small storage device that consists of a collection of word-size registers, each with a unique name.
-*ALU*: computes new data and address values.
+**Register file**: small storage device that consists of a collection of word-size registers, each with a unique name.
+**ALU**: computes new data and address values.
 
 Example instruction in the instruction set:
         - **Load**: Copy a byte or word from main memory into a register, overwriting previous data.
@@ -52,7 +52,7 @@ Example instruction in the instruction set:
 
 CPUs appear simple, but actually they have a lot of complex mechanisms to speed up program execution. The *microarchitecture* is actually how its implemented.
 
-*DMA: Direct memory access* - Data travels direct from disk into ram, bypassing the CPU.
+**DMA**: Direct memory access - Data travels direct from disk into ram, bypassing the CPU.
 
 ###### Performance:
 A lot of the slow down in processing is the overhead of moving data from disk to memory to registers to display devices. So a lot of effort is put into increasing the efficiency of the I/O. Due to physical laws, the smaller the device the faster they are.
@@ -64,7 +64,7 @@ Storage performance:
 
 There's a processor-memory gap: it's easier and cheaper to make processors faster than it is to make main memory faster. To account for slow memory we have *cache memories* (caches).
 
-*Caches*:
+**Caches**:
 - Temporary staging area for information the CPU is likely to need in the near future.
 - L1 cache holds 10s of K of bytes and can be accessed almost as faster as the register file.
 - Large L2 holds 100s of K of bytes. 5x longer to access than L1. But still 5-10x faster than ram.
@@ -72,7 +72,7 @@ There's a processor-memory gap: it's easier and cheaper to make processors faste
 - Newer systems have three levels of cache.
 - Caching relies on exploiting *locality*: the fact that programs tend to access data in localized regions.
 
-*Storage hierarchy*:
+**Storage hierarchy**:
 - All storage in a system forms a hierarchy: starting with registers -> L1 ... RAM -> Disk -> Remote Disk.
 - As we move down, storage gets slower, large, and cheaper.
 - L0 is registers.
@@ -87,7 +87,7 @@ It has 2 purposes:
 
 The OS does this by some fundamental abstractions:
 
-*Processes*: abstractions for the processor, main memory, and I/O.
+**Processes**: abstractions for the processor, main memory, and I/O.
 - When a program is run the OS provides the illusion that its the only one running on the system.
 - Appears to have exclusive use of CPU, main memory, and I/O.
 - Multiple processes can be running concurrently with each appearing to have exclusive use.
@@ -103,7 +103,7 @@ The OS does this by some fundamental abstractions:
         - Easier to share data between threads than processes.
         - Typically more efficient than processes.
 
-*Virtual memory*: abstraction for main memory and disk I/O devices
+**Virtual memory**: abstraction for main memory and disk I/O devices
 - Provides a process the illusion it has exclusive use of memory.
 - Each process has the same uniform view of memory: its virtual address space.
 - Virtual address space from bottom to top (0 address to N)
@@ -114,7 +114,7 @@ The OS does this by some fundamental abstractions:
         - Kernel virtual memory: reserved for kernel, not accessible to user apps.
 - Requires a hardware translation of every address.
 
-*Files*: abstractions for I/O devices
+**Files**: abstractions for I/O devices
 - A sequence of bytes, nothing more, nothing less.
 - All input and output in the system is performed by reading and writing files, using a subset of system calls known as Unix I/O.
 - Simple but powerful way to have uniform view of all the varied I/O devices.
@@ -125,8 +125,8 @@ The OS does this by some fundamental abstractions:
 A speed up of a part of system is dependent on how significant that part is to the overall system; its fraction of the overall time it takes to run the operation. So a 6x speed up for a part of the system that is 50% responsible is only 3x in the end.
 
 ##### Concurrency & parallelism
-*Concurrency*: general concept of a system with multiple, simultaneous activities.
-*Parallelism*: the use of concurrency to make a system faster.
+**Concurrency**: general concept of a system with multiple, simultaneous activities.
+**Parallelism**: the use of concurrency to make a system faster.
 
 ###### Types of concurrency
 1. Thread-level:
@@ -147,7 +147,7 @@ A speed up of a part of system is dependent on how significant that part is to t
 
 Regardless of the parallelism used in running something, the simple sequential model of execution implied by the CPUs instruction set is always maintained.
 
-*Virtual machines*: Abstracts the entire computer, including the OS, the processor, and the programs.
+**Virtual machines**: Abstracts the entire computer, including the OS, the processor, and the programs.
 
 
 ## Chapter 2 - Representing and manipulating information
