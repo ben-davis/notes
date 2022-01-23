@@ -42,13 +42,14 @@ Appears to operate according to a simple model defined by its *instruction set a
 There are only a few of these simple operations and they revolve around main memory, the register file, and the arithmetic/logic unit (ALU).
 
 **Register file**: small storage device that consists of a collection of word-size registers, each with a unique name.
+
 **ALU**: computes new data and address values.
 
 Example instruction in the instruction set:
-        - **Load**: Copy a byte or word from main memory into a register, overwriting previous data.
-        - **Store**: Copy a byte or word from a register to a location in main memory, overwriting.
-        - **Operate**: Copy to registers to ALU, perform arithmetic operation, and store result in register, overwriting.
-        - **Jump**: Copy word from the instruction itself and copy it into the program counter.
+- **Load**: Copy a byte or word from main memory into a register, overwriting previous data.
+- **Store**: Copy a byte or word from a register to a location in main memory, overwriting.
+- **Operate**: Copy to registers to ALU, perform arithmetic operation, and store result in register, overwriting.
+- **Jump**: Copy word from the instruction itself and copy it into the program counter.
 
 CPUs appear simple, but actually they have a lot of complex mechanisms to speed up program execution. The *microarchitecture* is actually how its implemented.
 
