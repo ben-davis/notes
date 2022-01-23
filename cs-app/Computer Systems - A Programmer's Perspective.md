@@ -152,17 +152,17 @@ Regardless of the parallelism used in running something, the simple sequential m
 
 
 ## Chapter 2 - Representing and manipulating information
-- Base 10 makes sense for humans (10 fingers and all that), but base 2 makes more sense for storage of information due to the simplicity of representing two states.
-- Three representations of numbers:
-	- Unsigned: numbers greater than 0
-	- Twos-complement: positive or negative
-	- Floating point
-		- Is not associative due to the finite precision of representation
-- Pointers contain the address and a type
-- Binary notation for a byte is verbose, so instead we use base-16, or hexadecimal.
-	- Uses the chars 0-9 and A-F, giving 16 possible values
-	- A single byte can range from $O0_16$ to $FF_16$
-- C uses `0X` to indicate hex values
+Base 10 makes sense for humans (10 fingers and all that), but base 2 makes more sense for storage of information due to the simplicity of representing two states.
+
+Three representations of numbers:
+1. **Unsigned**: numbers greater than 0
+2. **Twos-complement**: positive or negative
+3. **Floating point**: Is not associative due to the finite precision of representation
+
+Pointers contain the address and a type of a byte in memory. Binary notation for a byte is verbose, so instead we use base-16, or hexadecimal.
+
+Hexidecimal uses the chars 0-9 and A-F, giving 16 possible values. A single byte can range from $O0_16$ to $FF_16$. C uses `0X` to indicate hex values.
+
 - Problems:
 	- Problem: 2.1
 		- 0x39A7F8: 0011 1001 1010 0111 1111 1000
@@ -204,55 +204,62 @@ Regardless of the parallelism used in running something, the simple sequential m
 	- Problem 2.4
 		- 0x503c + 0x8 = 
 		- Not doing these as I don't get how to add in a different base
-- Word size: the nominal size of pointer data
-	- The size of an address puts a limit on the maximal addressable space, so 32 bit words, gives a limit of 2^32 - 1 = 4,294,967,295 bytes (4GB), as that's the total number of bytes that can be individually addressed using 32 bit words.
-	- 64-bit has 16 exabytes of addressable memory.
-- C data types
-	- Signed or unsigned ints
-	- `char` is a singe byte, usually, but not necessarily, for storing a character
-	- Some types vary based on the word size of the systems the programs are built for. But there are standardized types like `int32_t`
-	- Whether its signed or unsigned is up to the programmer
-- Objects that span multiple bytes
-	- We need two conventions:
-		- what the address of the object shall be
-		- how we order the bytes in memory
-	- Virtual all machines, multi-byte object is stored as a contiguous sequence of bytes with the address of the object the smallest address of the bytes used
-		- E.g if a 4-byte in has address 0x100, then the bytes 0x100, 0x101, 0x102, 0x103 are used.
-	- Once we know the bytes, we now need to know how the bytes are ordered to represent the object
-		- Little endian: least significant byte comes first
-		- Big endian: most significant byte comes last
-		- Most intel use little-endian
-		- Arm is bi-endian - can do either, up to the OS. iOS and Android are both little-endian
-		- Which is chosen has no intrinsic advantage, but machines operating over a network have to agree.
-- Problems
-	- 2.5
-		- A: 21, 87
-		- B: 21 43, 87 65
-		- C: 21 43 65, 87 65 43
-	- 2.6
-		- A: `00000000001101011001000100100001`
-                   `01001010010101100100010010000100`
-		-  B: 21 bits
-		-  C: everything else
--  Strings are encoded as an array of characters terminated by the null (value: 0) character. Each character is represented by some standard encoding, with ASCII being the most common.
-	-  The ASCII code results in any digit x by represented by 0x3x and the null character is 0x00. That is the same across all platforms, meaning text data is more platform independent that binary data.
--  Problems:
-	-  2.7
-		-  0x61 0x62 0x63 0x64 0x65 0x66
-		-  `strlen` doesn't give give the length including the null character
--  If we convert some source code to machine code, the resulting bytes will be very different depending on OS and instruction set/machine. Meaning binary data is rarely portable.
-	-  A key concept is that from the perspective of the machine, a program is simply a sequence of bytes.
+
+**Word size**: the nominal size of pointer data. The size of an address puts a limit on the maximal addressable space, so 32 bit words, gives a limit of 2^32 - 1 = 4,294,967,295 bytes (4GB), as that's the total number of bytes that can be individually addressed using 32 bit words. 64-bit has 16 exabytes of addressable memory.
+
+#### C data types
+- Signed or unsigned ints
+- `char` is a singe byte, usually, but not necessarily, for storing a character
+- Some types vary based on the word size of the systems the programs are built for. But there are standardized types like `int32_t`
+- Whether its signed or unsigned is up to the programmer
+
+**Objects that span multiple bytes**:
+- We need two conventions:
+        - what the address of the object shall be
+        - how we order the bytes in memory
+- Virtually all machines, multi-byte object is stored as a contiguous sequence of bytes with the address of the object the smallest address of the bytes used
+        - E.g if a 4-byte in has address 0x100, then the bytes 0x100, 0x101, 0x102, 0x103 are used.
+- Once we know the bytes, we now need to know how the bytes are ordered to represent the object
+        - Little endian: least significant byte comes first
+        - Big endian: most significant byte comes first
+        - Most intel use little-endian
+        - Arm is bi-endian - can do either, up to the OS. iOS and Android are both little-endian
+        - Which is chosen has no intrinsic advantage, but machines operating over a network have to agree.
+
+**Problems**:
+- 2.5
+        - A: 21, 87
+        - B: 21 43, 87 65
+        - C: 21 43 65, 87 65 43
+- 2.6
+        - A: `00000000001101011001000100100001`
+           `01001010010101100100010010000100`
+        -  B: 21 bits
+        -  C: everything else
+
+Strings are encoded as an array of characters terminated by the null (value: 0) character. Each character is represented by some standard encoding, with ASCII being the most common.
+
+The ASCII code results in any digit x by represented by 0x3x and the null character is 0x00. That is the same across all platforms, meaning text data is more platform independent that binary data.
+
+**Problems**:
+-  2.7
+        -  0x61 0x62 0x63 0x64 0x65 0x66
+        -  `strlen` doesn't give give the length including the null character
+
+If we convert some source code to machine code, the resulting bytes will be very different depending on OS and instruction set/machine. Meaning binary data is rarely portable.
+
+**A key concept is that from the perspective of the machine, a program is simply a sequence of bytes.**
 
 #### 2.1.6 Boolean Algebra
-- As we can easily represent binary code physically, it allows us to formulate an algebra that captures the basic principles of logical reasoning.
-- We can use the four boolean operations to operate on bit vectors, strings of 0s and 1s of some fixed length $w$.
-	- For example, let $a = [0110]$ and $b = [1100]$, then $a & b$, $A | b$, $a ^ b$ and $~b$:
-		
-		| & | \| | ^ | ~ |
-		| - | - | - | - |
-		| `0110` | `0110` | `0110` |  |
-		| `1100` | `1100` | `1100` | `1100` |
-		| `0100` | `1110` | `1010` | `0011` |
+As we can easily represent binary code physically, it allows us to formulate an algebra that captures the basic principles of logical reasoning.
+
+We can use the four boolean operations to operate on bit vectors, strings of 0s and 1s of some fixed length $w$. For example, let $a = [0110]$ and $b = [1100]$, then $a & b$, $A | b$, $a ^ b$ and $~b$:
+| & | \| | ^ | ~ |
+| - | - | - | - |
+| `0110` | `0110` | `0110` |  |
+| `1100` | `1100` | `1100` | `1100` |
+| `0100` | `1110` | `1010` | `0011` |
+
 - Problem 2.9:
 	- This uses 3 bit vectors to encode RGB values. Using bitwise boolean operators we can manipulate the colors.
 	- A
