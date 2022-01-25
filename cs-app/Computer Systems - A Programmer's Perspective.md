@@ -1,4 +1,308 @@
-# Computer Systems: A Programmer's Perspective
+ Computer Systems: A Programmer's Perspective
+
+* [Things I should revise once finished:](#things-i-should-revise-once-finished:)
+* [Chapter 1 - A Tour of Computer Systems](#chapter-1---a-tour-of-computer-systems)
+  * [Compilation](#compilation)
+  * [Elements of a machine](#elements-of-a-machine)
+    * [Hardware](#hardware)
+      * [Buses](#buses)
+      * [I/O](#i/o)
+      * [Main memory](#main-memory)
+      * [Processor](#processor)
+        * [Performance:](#performance:)
+      * [Operating system:](#operating-system:)
+        * [Amdhal's law](#amdhal's-law)
+      * [Concurrency & parallelism](#concurrency-&-parallelism)
+        * [Types of concurrency](#types-of-concurrency)
+* [Chapter 2 - Representing and manipulating information](#chapter-2---representing-and-manipulating-information)
+    * [C data types](#c-data-types)
+    * [2.1.6 Boolean Algebra](#2.1.6-boolean-algebra)
+    * [2.1.9 Bit shifting](#2.1.9-bit-shifting)
+  * [2.2 Integer Representations](#2.2-integer-representations)
+    * [2.2.2 Unsigned encoding](#2.2.2-unsigned-encoding)
+    * [2.2.3 Two's-Complement Encoding](#2.2.3-two's-complement-encoding)
+    * [2.2.4 Conversions between signed and unsigned](#2.2.4-conversions-between-signed-and-unsigned)
+    * [2.2.5 Signed and unsigned in C](#2.2.5-signed-and-unsigned-in-c)
+    * [2.2.6 Expanding the bit representation of a number](#2.2.6-expanding-the-bit-representation-of-a-number)
+    * [2.2.8 Advice](#2.2.8-advice)
+  * [2.3 Integer Arithmetic](#2.3-integer-arithmetic)
+    * [2.3.1 Unsigned Addition](#2.3.1-unsigned-addition)
+    * [2.3.2 Two's-Complement Addition](#2.3.2-two's-complement-addition)
+    * [2.3.4 Unsigned Multiplication](#2.3.4-unsigned-multiplication)
+    * [2.3.5 Two's-Complement Multiplication](#2.3.5-two's-complement-multiplication)
+    * [2.3.6 Multiplying by constants](#2.3.6-multiplying-by-constants)
+    * [2.3.7 Dividing by powers of 2](#2.3.7-dividing-by-powers-of-2)
+    * [2.3.8 Thoughts on integer arithmetic](#2.3.8-thoughts-on-integer-arithmetic)
+  * [2.4 Floating Point](#2.4-floating-point)
+    * [2.4.2 IEEE Floating-Point Representation (need to come back to this and properly understand it)](#2.4.2-ieee-floating-point-representation-(need-to-come-back-to-this-and-properly-understand-it))
+    * [2.4.4 Rounding](#2.4.4-rounding)
+    * [2.4.5 Floating-point operations](#2.4.5-floating-point-operations)
+  * [2.5 Summary](#2.5-summary)
+* [Chapter 3 Machine-Level Representation of Programs](#chapter-3-machine-level-representation-of-programs)
+  * [3.1 A Historical Perspective](#3.1-a-historical-perspective)
+  * [3.2 Program Encodings](#3.2-program-encodings)
+    * [3.2.1 Machine-level code](#3.2.1-machine-level-code)
+  * [3.3 Data Formats](#3.3-data-formats)
+  * [3.4 Accessing Information](#3.4-accessing-information)
+    * [3.4.2 Data Movement Instructions](#3.4.2-data-movement-instructions)
+    * [3.4.4 Pushing and popping stack data](#3.4.4-pushing-and-popping-stack-data)
+  * [3.5 Arithmetic and Logical Operations](#3.5-arithmetic-and-logical-operations)
+    * [3.5.1 Load Effective Address](#3.5.1-load-effective-address)
+    * [3.5.2 Unary and Binary Operations](#3.5.2-unary-and-binary-operations)
+    * [3.5.3 Shift Operations](#3.5.3-shift-operations)
+    * [3.5.4 Discussion](#3.5.4-discussion)
+    * [3.5.5 Special Ops](#3.5.5-special-ops)
+  * [3.6 Control](#3.6-control)
+    * [3.6.1 Condition codes](#3.6.1-condition-codes)
+    * [3.6.2 Accessing condition codes](#3.6.2-accessing-condition-codes)
+    * [3.6.3 Jump Instructions](#3.6.3-jump-instructions)
+    * [3.6.4 Jump Instructions](#3.6.4-jump-instructions)
+    * [3.6.5 Implementing Conditional Branches with Conditional Control](#3.6.5-implementing-conditional-branches-with-conditional-control)
+    * [3.6.6 Implementing Conditional Branches with Conditional Moves](#3.6.6-implementing-conditional-branches-with-conditional-moves)
+    * [3.6.7 Loops](#3.6.7-loops)
+    * [3.6.8 Switch Statements](#3.6.8-switch-statements)
+  * [3.7 Procedures](#3.7-procedures)
+    * [3.7.2 Control Transfer](#3.7.2-control-transfer)
+    * [3.7.3 Data Transfer](#3.7.3-data-transfer)
+    * [3.7.4 Local Storage on the Stack](#3.7.4-local-storage-on-the-stack)
+    * [3.7.5 Local Storage in Registers](#3.7.5-local-storage-in-registers)
+    * [3.7.6 Recursive Procedures](#3.7.6-recursive-procedures)
+  * [3.8 Array Allocation and Access](#3.8-array-allocation-and-access)
+    * [3.8.2 Pointer Arithmetic](#3.8.2-pointer-arithmetic)
+    * [3.8.3 Nested Arrays](#3.8.3-nested-arrays)
+    * [3.8.4 Fixed-Sized Arrays](#3.8.4-fixed-sized-arrays)
+    * [3.8.5 Variable-Sized Arrays](#3.8.5-variable-sized-arrays)
+  * [3.9 Heterogeneous Data Structures](#3.9-heterogeneous-data-structures)
+    * [3.9.1 Structures](#3.9.1-structures)
+    * [3.9.2 Unions](#3.9.2-unions)
+    * [3.9.3 Data Alignment](#3.9.3-data-alignment)
+  * [3.10 Combining Control and Data in Machine-Level Programs](#3.10-combining-control-and-data-in-machine-level-programs)
+    * [3.10.1 Understanding Pointers](#3.10.1-understanding-pointers)
+    * [3.10.3 Out-of-Bounds Memory References and Buffer Overflow](#3.10.3-out-of-bounds-memory-references-and-buffer-overflow)
+    * [“3.10.4 Thwarting Buffer Overflow Attacks”](#“3.10.4-thwarting-buffer-overflow-attacks”)
+    * [3.10.5 Supporting Variable-Size Stack Frames](#3.10.5-supporting-variable-size-stack-frames)
+  * [3.11 Floating-Point Code](#3.11-floating-point-code)
+    * [3.11.1 Floating-Point Movement and Conversion Operations](#3.11.1-floating-point-movement-and-conversion-operations)
+    * [3.11.2 Floating-Point Code in Procedures](#3.11.2-floating-point-code-in-procedures)
+    * [3.11.3 Floating-Point Arithmetic Operations](#3.11.3-floating-point-arithmetic-operations)
+    * [3.11.4 Defining and Using Floating-Point Constants](#3.11.4-defining-and-using-floating-point-constants)
+    * [3.11.5 Using Bitwise Operations in Floating-Point Code](#3.11.5-using-bitwise-operations-in-floating-point-code)
+    * [3.11.6 Floating-Point Comparison Operations](#3.11.6-floating-point-comparison-operations)
+  * [3.12 Summary](#3.12-summary)
+* [Chapter 4 - Processor Architecture](#chapter-4---processor-architecture)
+  * [4.1.3 - Instruction Encoding](#4.1.3---instruction-encoding)
+  * [4.1.4 Exceptions](#4.1.4-exceptions)
+  * [4.2 Logic Design and the Hardware Control Language HCL](#4.2-logic-design-and-the-hardware-control-language-hcl)
+  * [4.2.1 Logic Gates](#4.2.1-logic-gates)
+  * [4.2.2 Combinational Circuits](#4.2.2-combinational-circuits)
+  * [4.2.3 Word-level Combinational Circuits](#4.2.3-word-level-combinational-circuits)
+  * [4.2.4 Set Membership](#4.2.4-set-membership)
+  * [4.2.5 Memory and Clocking](#4.2.5-memory-and-clocking)
+  * [4.3 Implementation of a CPU from an ISA (renamed from the real chapter name for my own understanding)](#4.3-implementation-of-a-cpu-from-an-isa-(renamed-from-the-real-chapter-name-for-my-own-understanding))
+  * [4.3.1 Organizing Processing into Stages](#4.3.1-organizing-processing-into-stages)
+  * [4.3.2 Hardware Structure](#4.3.2-hardware-structure)
+  * [4.3.3 SEQ Timing](#4.3.3-seq-timing)
+  * [4.4 General Principles of Pipelining](#4.4-general-principles-of-pipelining)
+  * [4.4.1 Computational Pipelines](#4.4.1-computational-pipelines)
+  * [4.5 Building a Pipelined CPU](#4.5-building-a-pipelined-cpu)
+    * [Branch Prediction](#branch-prediction)
+    * [Hazards](#hazards)
+      * [Avoiding data hazards by stalling](#avoiding-data-hazards-by-stalling)
+      * [Avoiding data hazards by forwarding](#avoiding-data-hazards-by-forwarding)
+      * [Avoiding control hazards](#avoiding-control-hazards)
+      * [Exception handling](#exception-handling)
+      * [Multicycle Instructions](#multicycle-instructions)
+* [Chapter 5 Optimizing Program Performance](#chapter-5-optimizing-program-performance)
+  * [5.1 Capabilities and Limitations of Optimizing Compilers](#5.1-capabilities-and-limitations-of-optimizing-compilers)
+  * [5.2 Expressing Program Performance](#5.2-expressing-program-performance)
+  * [5.4 Eliminating Loop Inefficiencies](#5.4-eliminating-loop-inefficiencies)
+  * [5.5 Reducing Procedure Calls](#5.5-reducing-procedure-calls)
+  * [5.6 Eliminating Unneeded Memory References](#5.6-eliminating-unneeded-memory-references)
+  * [5.7 Understanding Modern Processors](#5.7-understanding-modern-processors)
+  * [5.8 Loop Unrolling](#5.8-loop-unrolling)
+  * [5.9 Enhancing Parallelism](#5.9-enhancing-parallelism)
+  * [5.11 Other limiting factors](#5.11-other-limiting-factors)
+  * [5.12 Understanding Memory Performance](#5.12-understanding-memory-performance)
+  * [5.13 Real-world performance improvement techniques](#5.13-real-world-performance-improvement-techniques)
+  * [5.15](#5.15)
+* [Chapter 6 The Memory Hierarchy](#chapter-6-the-memory-hierarchy)
+  * [6.1 Storage Tech](#6.1-storage-tech)
+    * [RAM](#ram)
+      * [SRAM](#sram)
+      * [DRAM](#dram)
+      * [Conventional DRAM](#conventional-dram)
+      * [Memory Modules](#memory-modules)
+      * [Enhanced DRAMs](#enhanced-drams)
+    * [Nonvolatile Memory](#nonvolatile-memory)
+      * [Programmable ROM (PROM)](#programmable-rom-(prom))
+      * [Erasable Programmable ROM (EPROM)](#erasable-programmable-rom-(eprom))
+      * [Electronically Erasable Programmable ROM (EEPROM)](#electronically-erasable-programmable-rom-(eeprom))
+      * [Flash Memory](#flash-memory)
+      * [Accessing Main Memory](#accessing-main-memory)
+    * [Disk Storage](#disk-storage)
+      * [Disk Geometry](#disk-geometry)
+      * [Disk Operation](#disk-operation)
+      * [Logical Disk Blocks](#logical-disk-blocks)
+      * [Disk formatting](#disk-formatting)
+      * [Connecting I/O Devices](#connecting-i/o-devices)
+      * [Accessing Disks](#accessing-disks)
+    * [SSDs](#ssds)
+      * [Geometry](#geometry)
+    * [Trends](#trends)
+  * [6.2 Locality](#6.2-locality)
+    * [Program instruction locality](#program-instruction-locality)
+  * [6.3 The Memory Hierarchy](#6.3-the-memory-hierarchy)
+    * [Cache](#cache)
+  * [6.4 Cache Memories](#6.4-cache-memories)
+    * [Issues with writes](#issues-with-writes)
+    * [Anatomy of a real cache hierarchy](#anatomy-of-a-real-cache-hierarchy)
+    * [Performance of caches](#performance-of-caches)
+  * [6.5 Writing Cache-Friendly Code](#6.5-writing-cache-friendly-code)
+  * [6.6 The impact of caches on program performance](#6.6-the-impact-of-caches-on-program-performance)
+  * [6.7 Summary](#6.7-summary)
+* [Chapter 7 Linking](#chapter-7-linking)
+* [7.1 Compiler Drivers](#7.1-compiler-drivers)
+* [7.2 Static Linking](#7.2-static-linking)
+* [7.3 Object files](#7.3-object-files)
+* [7.4 Relocatable Object Files](#7.4-relocatable-object-files)
+* [7.5 Symbols and Symbol Tables](#7.5-symbols-and-symbol-tables)
+* [7.6 Symbol Resolution](#7.6-symbol-resolution)
+  * [Static Libraries](#static-libraries)
+* [7.7 Relocation](#7.7-relocation)
+  * [Relocation entries](#relocation-entries)
+* [7.8 Executable Object Files](#7.8-executable-object-files)
+* [7.9 Loading Executable Object Files](#7.9-loading-executable-object-files)
+* [7.10 Dynamic Linking with Shared Libraries](#7.10-dynamic-linking-with-shared-libraries)
+* [7.11 Loading and Linking Shared Libraries from Applications](#7.11-loading-and-linking-shared-libraries-from-applications)
+* [7.12 Position-Independent Code (PIC)](#7.12-position-independent-code-(pic))
+* [7.13 Library Interpositioning](#7.13-library-interpositioning)
+* [8.1 Exceptions](#8.1-exceptions)
+  * [Exception Handling](#exception-handling)
+  * [Classes of exceptions](#classes-of-exceptions)
+    * [Interrupts](#interrupts)
+    * [Traps and system calls](#traps-and-system-calls)
+    * [Faults](#faults)
+    * [Aborts](#aborts)
+  * [Linux Exceptions (for x86)](#linux-exceptions-(for-x86))
+* [8.2 Processes](#8.2-processes)
+  * [Logical Control Flow](#logical-control-flow)
+  * [Concurrent Flows](#concurrent-flows)
+  * [Private Address Space](#private-address-space)
+  * [User and Kernel Modes](#user-and-kernel-modes)
+  * [Context Switches](#context-switches)
+* [8.4 Process Control](#8.4-process-control)
+  * [Process IDs](#process-ids)
+  * [Creating and terminating processes](#creating-and-terminating-processes)
+  * [Reaping Child Processes](#reaping-child-processes)
+  * [Loading and Running Programs](#loading-and-running-programs)
+  * [Using `fork` and `execve`](#using-`fork`-and-`execve`)
+* [8.5 Signals](#8.5-signals)
+  * [Sending a signal](#sending-a-signal)
+  * [Receiving a signal](#receiving-a-signal)
+  * [Blocking and Unblocking Signals](#blocking-and-unblocking-signals)
+  * [Writing Signal Handlers](#writing-signal-handlers)
+  * [Correct signal handling](#correct-signal-handling)
+* [8.6 Nonlocal Jumps](#8.6-nonlocal-jumps)
+* [8.7 Tools for manipulating processes](#8.7-tools-for-manipulating-processes)
+* [8.8 Summary](#8.8-summary)
+* [9.1 Physical and Virtual Addressing](#9.1-physical-and-virtual-addressing)
+* [9.2 Address Spaces](#9.2-address-spaces)
+    * [Practice Problem 9.3](#practice-problem-9.3)
+* [9.3 VM as a Tool for Caching](#9.3-vm-as-a-tool-for-caching)
+  * [Page Tables](#page-tables)
+    * [Practice Problem 9.2](#practice-problem-9.2)
+      * [NOTE: How I calculated the above:](#note:-how-i-calculated-the-above:)
+* [9.4 VM as a Tool for Memory Management](#9.4-vm-as-a-tool-for-memory-management)
+* [9.5 VM as a Tool for Memory Protection.](#9.5-vm-as-a-tool-for-memory-protection.)
+* [9.6 Address Translation](#9.6-address-translation)
+  * [Multi-level page tables](#multi-level-page-tables)
+  * [Putting it all together](#putting-it-all-together)
+      * [Practice Problem 9.4](#practice-problem-9.4)
+* [9.7 Case Study of a real system (i7)](#9.7-case-study-of-a-real-system-(i7))
+* [9.8 Memory Mapping](#9.8-memory-mapping)
+  * [Sharing objects](#sharing-objects)
+  * [Forking](#forking)
+  * [execve](#execve)
+* [9.9 Dynamic Memory Allocation](#9.9-dynamic-memory-allocation)
+  * [Malloc & Free](#malloc-&-free)
+  * [Requirements of the allocator](#requirements-of-the-allocator)
+  * [Goals of an allocator](#goals-of-an-allocator)
+  * [Fragmentation](#fragmentation)
+  * [Implementation issues](#implementation-issues)
+  * [Implicit free lists](#implicit-free-lists)
+  * [Placing Allocated Blocks](#placing-allocated-blocks)
+  * [Splitting Free Blocks](#splitting-free-blocks)
+  * [Getting more heap memory](#getting-more-heap-memory)
+  * [Coalescing Free Blocks](#coalescing-free-blocks)
+  * [Explicit Free Lists](#explicit-free-lists)
+  * [Segregated free lists](#segregated-free-lists)
+* [9.10 Garbage collection](#9.10-garbage-collection)
+  * [Basics](#basics)
+  * [Mark&Sweep](#mark&sweep)
+* [9.11 Common Memory-related Bugs in C](#9.11-common-memory-related-bugs-in-c)
+* [9.12 Summary](#9.12-summary)
+* [10.1 Unix I/O](#10.1-unix-i/o)
+* [10.2 Files](#10.2-files)
+* [10.3 Opening and closing files](#10.3-opening-and-closing-files)
+* [10.4 Reading and writing files](#10.4-reading-and-writing-files)
+* [10.5 Unbuffered / Buffered I/O](#10.5-unbuffered-/-buffered-i/o)
+* [10.6 Reading File Metadata](#10.6-reading-file-metadata)
+* [10.7 Reading Directory Contents](#10.7-reading-directory-contents)
+* [10.8 Sharing Files](#10.8-sharing-files)
+* [10.9 I/O Redirection](#10.9-i/o-redirection)
+* [10.10 Standard I/O](#10.10-standard-i/o)
+* [10.12 Summary](#10.12-summary)
+* [11.1 The Client-Server Programming Model](#11.1-the-client-server-programming-model)
+* [10.2 Networks](#10.2-networks)
+* [11.3 The Global IP Internet](#11.3-the-global-ip-internet)
+  * [IP Addresses](#ip-addresses)
+  * [Internet domain names](#internet-domain-names)
+  * [Internet Connections](#internet-connections)
+* [11.4 Sockets Interface](#11.4-sockets-interface)
+  * [Socket address structures](#socket-address-structures)
+  * [`socket` function](#`socket`-function)
+  * [`connect` function](#`connect`-function)
+  * [`bind` function](#`bind`-function)
+  * [`listen` function](#`listen`-function)
+  * [`accept` function](#`accept`-function)
+  * [Host and Service Conversion](#host-and-service-conversion)
+* [11.5 Web servers](#11.5-web-servers)
+  * [Web content](#web-content)
+  * [HTTP Transactions](#http-transactions)
+  * [HTTP Requests](#http-requests)
+  * [HTTP Responses](#http-responses)
+  * [Dynamic Content](#dynamic-content)
+* [11.6](#11.6)
+* [12.1 Concurrent Programming with Processes](#12.1-concurrent-programming-with-processes)
+  * [Pros and Cons](#pros-and-cons)
+* [12.2 Concurrent Programming with I/O Multiplexing](#12.2-concurrent-programming-with-i/o-multiplexing)
+  * [Event-Driven server based on I/O multiplexing](#event-driven-server-based-on-i/o-multiplexing)
+  * [Pros and cons](#pros-and-cons)
+* [12.3 Concurrent programming with threads](#12.3-concurrent-programming-with-threads)
+  * [Execution model](#execution-model)
+  * [Posix Threads](#posix-threads)
+  * [Threads terminate based on](#threads-terminate-based-on)
+  * [Reaping terminated threads](#reaping-terminated-threads)
+  * [Detachable threads](#detachable-threads)
+  * [Building a thread based web server](#building-a-thread-based-web-server)
+* [12.4 Shared variables in threaded programs](#12.4-shared-variables-in-threaded-programs)
+  * [Threads Memory Model](#threads-memory-model)
+  * [Mapping Variables to Memory](#mapping-variables-to-memory)
+* [12.5 Synchronizing threads with semaphores](#12.5-synchronizing-threads-with-semaphores)
+  * [Process graphs](#process-graphs)
+  * [Semaphores](#semaphores)
+  * [Semaphores to schedule shared resources](#semaphores-to-schedule-shared-resources)
+    * [Producer-Consumer](#producer-consumer)
+    * [Readers-Writers Problem](#readers-writers-problem)
+  * [Prethreading](#prethreading)
+* [12.6 Using threads for parallelism](#12.6-using-threads-for-parallelism)
+  * [Parallel Program Performance](#parallel-program-performance)
+* [12.7 Other concurrency issues](#12.7-other-concurrency-issues)
+  * [Thread Safety](#thread-safety)
+  * [Reentrancy](#reentrancy)
+  * [Races](#races)
+  * [Deadlocks](#deadlocks)
+* [12.8 Summary](#12.8-summary)
 
 ## Things I should revise once finished:
 1. Two's compliment and its effect on the possible arithmetic
@@ -496,12 +800,13 @@ Unsigned and two's complement satisfy many of the characteristics of real intege
 
 ## Chapter 3 Machine-Level Representation of Programs
 
-- Computers execute machine code, sequences of bytes encoding low-level operations that manipulate data, manage memory, read and write data on storage devices, and communicate over networks.
-- Compilers generate machine code through a series of stages.
-	- GCC outputs assembly, a textual representation of machine code.
-	- GCC then invokes an assembler and a linker to generate executable machine code.
-- x86-64 is a machine language (instruction set) created by Intel and still in use today.
-	- Because it's been around since 1978 it has a lot of arcane features that GCC/clang handles for us.
+Computers execute machine code, sequences of bytes encoding low-level operations that manipulate data, manage memory, read and write data on storage devices, and communicate over networks.
+
+Compilers generate machine code through a series of stages.
+1. GCC outputs assembly, a textual representation of machine code.
+2. GCC then invokes an assembler and a linker to generate executable machine code.
+
+x86-64 is a machine language (instruction set) created by Intel and still in use today. Because it's been around since 1978 it has a lot of arcane features that GCC/clang handles for us.
 
 
 ### 3.1 A Historical Perspective
@@ -513,122 +818,125 @@ Unsigned and two's complement satisfy many of the characteristics of real intege
 	- AMD build processors compatible with the same instruction set
 
 ### 3.2 Program Encodings
-- GCC process:
-	- Pre-processor: expands source code to include any files specified with `#include` and any macros specified by `#define`.
-	- Compiler: generates assembly 
-	- Assembler: Generates object code - a form of machine code (binary representations of all of the instructions). But the addresses of all global values are not filled in.
-	- Linker: merges the object-code files along with library code to generate the final executable.
+GCC process:
+1. **Pre-processor**: expands source code to include any files specified with `#include` and any macros specified by `#define`.
+2. **Compiler**: generates assembly 
+3. **Assembler**: Generates object code - a form of machine code (binary representations of all of the instructions). But the addresses of all global values are not filled in.
+4. **Linker**: merges the object-code files along with library code to generate the final executable.
 
 
 #### 3.2.1 Machine-level code
-- Machine-level code format and behaviour defined by the *instruction set architecture*.
-	- Most instruction sets are sequential.
-	- Hardware will optimize and run in parallel sometimes but will guarantee sequential behaviour.
-- Machine-level memory addresses are virtual addresses.
-	- A memory model that appears to be a vert large byte array.
-- Assembly code is very close to machine code
-	- It's most about readability
-- Assembly deals with things usually hidden to the programmer of C:
-	- `Program counter`: memory address of next instruction
-	- `Register file`: 16 named locations storing 64-bit values. Can hold addresses (C pointers) or integer data. Used for critical state of the program, temp data like args or local vars, or returned data from a function.
-	- `Condition code registers`: status information about recent executed arithmetic or logical instruction. Used to implement conditional changes in control or data flow. For if and while loops.
-	- `Vector registers`: one or more integer or floating-point values.
-- C provides a model of objefts with different data types allocated in memory
-	- Machine code views memory as a large byte-addressable array.
-		- Arrays and structres are just contigouos collections of bytes
-		- Scalar types are all the same, no differnece between types of pointers, integers, etc
-- Program memory:
-	- Machine code for the program
-	- Info required by the OS
-	- Run-time stack for managing procedure calls and returns
-	- Blocks of memory allocated by the user
-- OS manages translating virtual addresses to physical
-- Machine instructions are very simple
-	- Add two numbers in registers
-	- Move value between memory and register
-	- Conditionally branch to a new instruction address
-- The compiler must construct sequences of machine instructions to implement program constructs: arithmetic expressions, loops, proc calls, etc.
+Machine-level code format and behaviour is defined by the *instruction set architecture*. Most instruction sets are sequential. Hardware will optimize and run in parallel sometimes but will guarantee sequential behaviour.
 
-- Assembly files contain sequences of bytes that correspond to machine instructions
-	- We can see that by compiling an object-code file
-	- Then using `objdump` to disassemble it. It'll show the byte offset, the bytes themselves, and the assembly code it corresponds to.
-- x86-64 instructions range from 1 to 15 bytes
-	- Commonly used instructions and those with fewer operands use less bytes
-	- The instruction format is encoded in such a way that, from a given starting position. there's a unique decoding of the bytes into an instruction. So `53` is always the starting byte (and only byte) for `pushq %rbx`.
+Machine-level memory addresses are virtual addresses. A memory model that appears to be a very large byte array.
 
-- Instructions like `callq` will need provide the address of the proc to call.
-	- This is performed by the linker.
-	- Prior to this an individual object file can only provide placeholder addresses for unlinked procs. They're not actually real address in the file (AFAIK)
-	- It's the linker that actually provides links to these functions to produce an executable program.
-	- Linkers also insert (or is it the compiler?) insert noop instructions to make more efficient use of space.
+Assembly code is very close to machine code. It's most about that assembly is more readable.
 
-- Lines beginning with `.` are directives to guide the assembler and linker.
+Assembly deals with things usually hidden to the programmer of C:
+- `Program counter`: memory address of next instruction
+- `Register file`: 16 named locations storing 64-bit values. Can hold addresses (C pointers) or integer data. Used for critical state of the program, temp data like args or local vars, or returned data from a function.
+- `Condition code registers`: status information about recent executed arithmetic or logical instruction. Used to implement conditional changes in control or data flow. For if and while loops.
+- `Vector registers`: one or more integer or floating-point values.
+
+C provides a model of objects with different data types allocated in memory, but machine code just views memory as a large byte-addressable array. Arrays and structures in C are just contigouos collections of bytes. Scalar types are all the same, no differnece between types of pointers, integers, etc.
+
+Program memory includes:
+1. Machine code for the program
+2. Info required by the OS
+3. Run-time stack for managing procedure calls and returns
+4. Blocks of memory allocated by the user
+
+The OS manages translating virtual addresses to physical addresses.
+
+Machine instructions are very simple, e.g:
+- Add two numbers in registers
+- Move value between memory and register
+- Conditionally branch to a new instruction address
+
+The compiler must construct sequences of machine instructions to implement program constructs: arithmetic expressions, loops, proc calls, etc.
+
+Assembly files contain sequences of bytes that correspond to machine instructions. Which can be sees by:
+1. Compiling an object-code file.
+2. Then using `objdump` to disassemble it. It'll show the byte offset, the bytes themselves, and the assembly code it corresponds to.
+
+x86-64 instructions range from 1 to 15 bytes. Commonly used instructions and those with fewer operands use less bytes. The instruction format is encoded in such a way that, from a given starting position. there's a unique decoding of the bytes into an instruction. So `53` is always the starting byte (and only byte) for `pushq %rbx`.
+
+Instructions like `callq` will need to be provided the address of the proc to call. This is performed by the linker. Prior to this an individual object file can only provide placeholder addresses for unlinked procs. They're not actually real address in the file (AFAIK). It's the linker that actually provides links to these functions to produce an executable program. Linkers also insert (or is it the compiler?) insert noop instructions to make more efficient use of space.
+
+Lines beginning with `.` are directives to guide the assembler and linker.
 
 ### 3.3 Data Formats
-- Most instructions have suffixes that denote the size of the operand.
-	- `moveb` (move byte)
-	- `movew` (move word)
-	- `movel` (move double word)
-- Different data types have different suffixes, each of which corresponds to different intel data type / c declarations.
-	- E.g C: `long`: Suffix: `q`, intel: `Quad Word`
+Most instructions have suffixes that denote the size of the operand.
+- `moveb` (move byte)
+- `movew` (move word)
+- `movel` (move double word)
+
+Different data types have different suffixes, each of which corresponds to different intel data type / c declarations.
+- E.g C: `long`: Suffix: `q`, intel: `Quad Word`
 
 ### 3.4 Accessing Information
-- x86 CPUs have 16 general-purpose registers storing 64-bit values.
-- All of them are begin with `%r`.
-	- Instructions can operate on different data sizes by storing. them in the low-order bytes of the 16 registers.
-- Different registers have have different conventions for how they're used.
-- E.g %rsp is the stack point, used to indicate the end position in the run-time stack.
-- Most instructions have 1 or more operands: inputs and destinations.
-	- Source values can be constants or read from registers or memory.
-	- Operands have 3 modes:
-		1. Immediate: constants are given. Start with `$`. like `$0x1f`. Different instructions dictate different allowed values. The assembler will determine the most company way of represneting the value.
-		2. Register: The contents of a register, using 8-, 4-,2-, or 1 byte low-order portions of the register to use 
-		3. Memory: Access some memory location according to a computed address, often called `effective address`. There's a general format used to determine the address, but will have 4 components: `offset: Imm`, `base register`, `index register` and `scale factor`. Not all are required, e.b `(%rdi, %rcx)`.
-			1. The form in assembly is `Imm(rb, ri, s)`. Rb and Ri are registers, `s` is a scale factor.
-			2. The effective address is calculated by `Imm + R[rb] + R[ri] * s`
-			3. R[rb] just means the value of the register rb
+x86 CPUs have 16 general-purpose registers storing 64-bit values. All of them are begin with `%r`.
+
+Instructions can operate on different data sizes by storing them in the low-order bytes of the 16 registers. This is how can you have instructions like `moveb` to move a single byte even though the word size maybe be 8 bytes.
+
+Different registers have have different conventions for how they're used. E.g %rsp is the stack pointer, used to indicate the end position in the run-time stack.
+
+Most instructions have 1 or more operands: inputs and destinations. Source values for these can be constants, read from registers or read from memory:
+
+1. Immediate: constants are given. Start with `$`. like `$0x1f`. Different instructions dictate different allowed values. The assembler will determine the most compact way of representing the value.
+2. Register: The contents of a register, using 8-, 4-,2-, or 1 byte low-order portions of the register to use .
+3. Memory: Access some memory location according to a computed address, often called `effective address`. There's a general format used to determine the address, but will have 4 components: `offset: Imm`, `base register`, `index register` and `scale factor`. Not all are required, e.b `(%rdi, %rcx)`.
+        1. The form in assembly is `Imm(rb, ri, s)`. Rb and Ri are registers, `s` is a scale factor.
+        2. The effective address is calculated by `Imm + R[rb] + R[ri] * s`
+        3. R[rb] just means the value of the register rb
 
 
 #### 3.4.2 Data Movement Instructions
-- There are many different types of movement instructions.
-- The simplest move from one register to another and there are 4 based on data size: `moveb`, `movw`, `movl`, `moivq`
-- A location can be a register or a memory address, but x86 requires one of them be a register. That's because moving from memory to memory requires going through a register.
-- There are conventions around how movements modify the upper bits of a destination register. There are corresponding movement instructions for each of these different space-filling behaviors.
-- There's an instruction that explicitly moves pre-specified registers, for space saving as its a common instruction.
+There are many different types of movement instructions. The simplest move from one register to another and there are 4 based on data size: `moveb`, `movw`, `movl`, `moivq`.
+
+A location can be a register or a memory address, but x86 requires one of them be a register. That's because moving from memory to memory requires going through a register.
+
+There are conventions around how movements modify the upper bits of a destination register. There are corresponding movement instructions for each of these different space-filling behaviors.
+
+There's an instruction that explicitly moves pre-specified registers, for space saving as its a common instruction.
 - `%rax` is used to store the returned value of a function.
-- Dereferencing a point in C involves copying that point into a register, and then using this register in a memory regerence.
+- Dereferencing a point in C involves copying that pointer into a register, and then using this register in a memory reference.
 
 #### 3.4.4 Pushing and popping stack data
-- last in, first out array
-- As the stack grows, the top of the stack has the lowest memory address.
-- `%rsp` contains the address of the top stack element.
+Stack data operates as a last in, first out array.
+
+As the stack grows, the top of the stack has the lowest memory address with `%rsp` containing the address of the top stack element.
+
+Two operations:
 - `pushq`: pushes onto the stack
 - `popq`: pops from it
-- Both takes a single operand
-- To push to the stack:
-	- Decrement the stack pointer (e.g. 8 bytes for a 64-bit address)
-	- Then move your address to the stack pointer register
-- Popping
-	- Read from stack
-	- Increment stack pointer
+
+Both takes a single operand.
+
+To push to the stack:
+1. Decrement the stack pointer (e.g. 8 bytes for a 64-bit address)
+2. Then move your address to the stack pointer register
+
+To pop from the stack:
+1. Read from stack
+2. Increment stack pointer
 
 
 ### 3.5 Arithmetic and Logical Operations
-- Most of these instructions have size suffixes. 
-- 4 categories:
-	- Load effective address (leaq)
-	- Unary
-	- Binary
-	- Shifts
+Most of these instructions have size suffixes. There are 4 categories:
+1. Load effective address (leaq)
+2. Unary
+3. Binary
+4. Shifts
 
 #### 3.5.1 Load Effective Address
-- Variant of `movq`.
-- Copies the effective address given to the memory location given. It's what `&` uses in C. It copies the address of a memory location into another memory location. It creates pointers.
-- Can also be used for compactly describing arithmetic.
-	- E.g.
-	- If `%rdx` contains `x`, then
-	- `leaq 7(%rdx,%rdx,4),%rax`
-	- will set `%rax` to `7 + x + (4 * x) = 5x + 7`.
+Variant of `movq`. Copies the effective address given to the memory location given. It's what `&` uses in C. It copies the address of a memory location into another memory location. It creates pointers.
+
+Can also be used for compactly describing arithmetic. E.g:
+1. If `%rdx` contains `x`, then
+2. `leaq 7(%rdx,%rdx,4),%rax`
+3. will set `%rax` to `7 + x + (4 * x) = 5x + 7`.
+
 - Problem 3.6
 	- 6 + x
 	- x + y
@@ -645,25 +953,27 @@ Unsigned and two's complement satisfy many of the characteristics of real intege
 
 
 #### 3.5.2 Unary and Binary Operations
-- Unary
-	- Single operand as both source and dest
-	- Operand can either be a register or mem location
-	- `incq (%rsp)` = 8-byte element on top stack gets incremented
-	- What ++ and -- from C use
-- Binary ops
-	- Second operand is both source and dest
-	- So `x -= y`. x is the source and destination (but it's first here, in assembly its second): `subq %rax, $rdx` where %rdx has value of x.
+Unary
+- Single operand as both source and dest
+- Operand can either be a register or mem location
+- `incq (%rsp)` = 8-byte element on top stack gets incremented
+- What ++ and -- from C use
+
+Binary ops
+- Second operand is both source and dest
+- So `x -= y`. x is the source and destination (but it's first here, in assembly its second): `subq %rax, $rdx` where %rdx has value of x.
 
 #### 3.5.3 Shift Operations
-- Shift amount is given first and the value to shift is second.
-- Both arithmetic and logical shifts are possible.
-- The shift amount can be given as either an immediate value or with the single-byte register %cl. This means that's it's possible to shift in principal by 255.
-	- But it depends on the value to be shifted. And so as we only have max 64-bit values, that's the top end (for `w` bits long, the low-order `m` bits are used from %cl where `2^m = w`.
-	- The different sized values again have different ops: `salb (8)`, `salw (16)`, `sall (32)`, `salq (64)`.
-	- `sal`: left shift
-	- `sar`: right arithmetic (fill with sign bit)
-	- `shr`: right logical (fill with zeroes)
-- Problem 3.
+Shift amount is given first and the value to shift is second. Both arithmetic and logical shifts are possible.
+
+The shift amount can be given as either an immediate value or with the single-byte register %cl. This means that's it's possible to shift in principal by 255 (max integer encodable by 8 bits). But it depends on the value to be shifted. And so as we only have max 64-bit values, that's the top end (for `w` bits long, the low-order `m` bits are used from %cl where `2^m = w`).
+
+The different sized values again have different ops: `salb (8)`, `salw (16)`, `sall (32)`, `salq (64)`.
+- `sal`: left shift
+- `sar`: right arithmetic (fill with sign bit)
+- `shr`: right logical (fill with zeroes)
+
+Problem 3.
 	- `salq $4, %rax`
 	- `sarq %cl, %rax`
 
@@ -683,25 +993,27 @@ Problem 3.11
 
 
 #### 3.5.5 Special Ops
-- Multiplying two 64-bit integers requires 128 bit answer.
-	- x86 has limited ability to do this
-	- `imul/mul/div` can except two 64-bit operands and produces a 64-bit answer
-	- `imul/imul/idiv` with one operand will full multiply with the value stored in `%rax`, storing the higher-order 64 bits in `%rdx` and the low-order 64-bits in `%rax`.G
+Multiplying two 64-bit integers requires 128 bit answer.
+- x86 has limited ability to do this
+- `imul/mul/div` can except two 64-bit operands and produces a 64-bit answer
+- `imul/imul/idiv` with one operand will full multiply with the value stored in `%rax`, storing the higher-order 64 bits in `%rdx` and the low-order 64-bits in `%rax`.G
 	
 ### 3.6 Control
 #### 3.6.1 Condition codes
-- In addition to integer registers, the CPU maintains a set of single-bt condition code registers
-	- Describes attributes of most recent arithmetic or logical operation. The codes indicate what just happened and some attribute of it.
-- Useful condition codes:
-	- CF: Carry flag. Most recent op generated a carry out of the most significant bit. Used to detect over-flow for unsigned operations.
-	- ZF: Zero flag. Most recent op yielded zero.
-	- SF: Sign flag. Most recent op yielded a negative value.
-	- OF: Overflow flag. Most recent op caused a two's compliment overflow - either negative or positive.
-- `leaq` does not alter condition codes, as its intended to be used in address computations. Otherwise all modify.
-- There are instructions that only alter condition codes without modifying the registers.
-	- `CMP` behaves similar to SUB, except it sets the condition codes according to the differences of their two operands.
-		- Set's zero flag if the two operands are equal
-	- `TEST` behave similar to AND, except they modify condition codes. Commonly used to test if a register is negative.
+In addition to integer registers, the CPU maintains a set of single-bit condition code registers. Describes attributes of most recent arithmetic or logical operation. The codes indicate what just happened and some attribute of it.
+
+Useful condition codes:
+- CF: Carry flag. Most recent op generated a carry out of the most significant bit. Used to detect over-flow for unsigned operations.
+- ZF: Zero flag. Most recent op yielded zero.
+- SF: Sign flag. Most recent op yielded a negative value.
+- OF: Overflow flag. Most recent op caused a two's compliment overflow - either negative or positive.
+
+`leaq` does not alter condition codes, as its intended to be used in address computations. Otherwise all modify.
+
+There are instructions that only alter condition codes without modifying the registers.
+- `CMP` behaves similar to SUB, except it sets the condition codes according to the differences of their two operands.
+        - Set's zero flag if the two operands are equal
+- `TEST` behave similar to AND, except they modify condition codes. Commonly used to test if a register is negative.
 	
 #### 3.6.2 Accessing condition codes
 3 ways to access:
@@ -709,101 +1021,102 @@ Problem 3.11
 2. We can conditionally jump to some other part of the program
 3. We can conditionally transfer data
 
-For setting 0 or 1, we use the `SET` instructions.
-- There are several each of which differ based on what the conditions are. The suffix refers to the conditions not the size if the operands. So `setl` is set less not set long.
-- Uses one of the low-order single-byte registers or single-byte memory location. For 32-bit or 64-bit results, the higher order bits are cleared.
-- The process is:
-	- We use a `CMP` or `TEST` instruction to set the condition codes, then a `SET` instruction to set the lower-order byte of a register (usually `%eax`).
+For setting 0 or 1, we use the `SET` instructions. There are several `SET` instructions each of which differ based on what the conditions are. The suffix refers to the conditions not the size if the operands. So `setl` is set less not set long.
+
+Uses one of the low-order single-byte registers or single-byte memory location. For 32-bit or 64-bit results, the higher order bits are cleared.
+
+The process is: we use a `CMP` or `TEST` instruction to set the condition codes, then a `SET` instruction to set the lower-order byte of a register (usually `%eax`) based on the condition code.
 
 #### 3.6.3 Jump Instructions
-- JUMP causes the execution to switch to a completely new position in the program.
-- Generally indicated in assembly by a `label` defined elsewhere in the code.
-	- During assembly, the assembler determines the addresses of all labeled instructions and encodes the jump targets as a part of the jump instructions.
-	- The target can also be read from a register - called an *indirect* jump, vs a *direct* jump in the case of a label.
-- There are two JUMP instructions for direct and indirect jumps, then there's a bunch that jump based on condition codes.
-	- Conditional jumps can only be direct.
+JUMP causes the execution to switch to a completely new position in the program. Generally indicated in assembly by a `label` defined elsewhere in the code.
+
+During assembly, the assembler determines the addresses of all labeled instructions and encodes the jump targets as a part of the jump instructions. The target can also be read from a register - called an *indirect* jump, vs a *direct* jump in the case of a label.
+
+There are two JUMP instructions for direct and indirect jumps, then there's a bunch that jump based on condition codes. Conditional jumps can only be direct.
 	
-#### 3.6.4 Jump Instructions
-- The assembler and then the linker generate proper encodings for the jump targets - initially they're the human-readable labels in the object code.
-- Jump encodings are usually `PC relative`.
-	- They encode the difference between the address of the target instruction and the address of the instruction immediately following the jump.
-	- Offsets encoded using 1, 2 or 4 bytes.
-- Second encoding method: absolute address using 4 bytes to specify the target.
-- Assembler chooses.
+#### 3.6.4 Jump Instructions Encodings
+The assembler and then the linker generate proper encodings for the jump targets - initially they're the human-readable labels in the object code.
+
+Jump encodings are usually `PC relative`. They encode the difference between the address of the target instruction and the address of the instruction immediately following the jump.Offsets encoded using 1, 2 or 4 bytes.
+
+Second encoding method: absolute address using 4 bytes to specify the target. Assembler chooses which to use.
 
 #### 3.6.5 Implementing Conditional Branches with Conditional Control
-- The general process:
-	- An if/else is broken into a labeled block for the `else`, and the `if` as an initial block with a conditional jump inserted in (as `cmp` or similar followed by a `jump`). If the condition is matched, it jumps to the else.
+The general process: an if/else is broken into a labeled block for the `else`, and the `if` as an initial block with a conditional jump inserted in (as `cmp` or similar followed by a `jump`). If the condition is matched, it jumps to the else.
 
 #### 3.6.6 Implementing Conditional Branches with Conditional Moves
-- 3.6.5 is the conventional way to implement control flow.
-	- But it can be very inefficient on modern processors.
-- An alternative is through a conditional transfer of data.
-- It only works for simple conditions, where both outcomes of the condition can be computed, then one is chosen based on the condition.
-	- So the one outcome is set to `rax`.
-	- Then another outcome is moved to another register `rdx`.
-	- Then a `cmp` is used to compute the condition.
-	- Then a `cmove` is used to conditionally move `rdx` to `rax` if the condition was true.
-- This method can be more efficient due to pipelining of modern processors.
-	- Operations are broken into smaller steps, some of which can be ran in parallel.
-	- Conditional branching based on data moves allows for more efficient pipelining. 
-	- In order to keep executing efficiently (keep the pipeline full of instructions), when a CPU encounters a conditional branch (not data move), it will go down both branches as it hasn't yet computed the condition. Processes use sophisticated `branch predicition logic` to try to guess whether or not each jump instruction will be followed.
-	- As long as it can guess reliably (modern processors aim for 90%), the instruction pipeline will be kept full of instrutions.
-	- Mispredicting though requires discarding work and going back down the other branch. It can be super expensive.
-- So conditional branches via data moves requires a fixed number of clock cycles regardless of the data being tested. So this makes it easier for the CPU to keep its pipeline full.
-- Not all conditions can use data moves.
-	- If the branch could possible error, then branching must be used.
-	- Generally only the most simple expressions will use conditional moves as its hard to have enough info to reliably predict the computation required for both branches.
+3.6.5 is the conventional way to implement control flow. But it can be very inefficient on modern processors.
+
+An alternative is through a conditional transfer of data. It only works for simple conditions, where both outcomes of the condition can be computed, then one is chosen based on the condition.
+
+How it works:
+1. So the one outcome is set to `rax`.
+2. Then another outcome is moved to another register `rdx`.
+3. Then a `cmp` is used to compute the condition.
+4. Then a `cmove` is used to conditionally move `rdx` to `rax` if the condition was true.
+
+This method can be more efficient due to pipelining of modern processors. Pipelined operations are broken into smaller steps, some of which can be ran in parallel. Conditional branching based on data moves allows for more efficient pipelining. 
+
+In order to keep executing efficiently (keep the pipeline full of instructions), when a CPU encounters a conditional branch (not data move), it will go down both branches as it hasn't yet computed the condition. Processes use sophisticated `branch predicition logic` to try to guess whether or not each jump instruction will be followed.
+
+As long as it can guess reliably (modern processors aim for 90%), the instruction pipeline will be kept full of instrutions. Mispredicting though requires discarding work and going back down the other branch. It can be super expensive.
+
+So conditional branches via data moves requires a fixed number of clock cycles regardless of the data being tested. So this makes it easier for the CPU to keep its pipeline full.
+
+Not all conditions can use data moves.
+- If the branch could possibly error, then branching must be used.
+- Generally only the most simple expressions will use conditional moves as its hard to have enough info to reliably predict the computation required for both branches.
 
 
 #### 3.6.7 Loops
-- We have `di-while`, `while`, `for` - none of these have an equivalent instruction. So they are implemented using a combination of jumps and conditional tests.
-- `do-while`:
-	- Label the start of the loop
-	- List of the instructions of the body
-	- Run a condition
-	- Have a conditional jump that will return to the beginning of the labeled blocked if the condition passes
-- `while`:
-	- Two ways.
-	- First is called *Jump to middle*:
-		- First an unconditional jump to a `test`block at the end of the loop
-		- Another block called `loop` that contains the body of the loop
-		- Run the condition
-		- Conditionally jump to `loop` otherwise return
-	- Second is called *guarded do*:
-		- Translates the code to a do-while by using a conditional branch to skip over the loop if the initial test fails.
-		- So the test of the while is ran first, if its false, just jump to the end. Otherwise now go into do while mode, where the body is executed then the condition, then back to the body if it passes.
-		- Generally used if a higher level of optimization is required/requested (by a gcc flag).
-- `for`:
-	- General form: `for (init-expr; test-expr; update-expr) body-statement`
-	- Identical to:
-```
-init-expr
-while (test-expr) {
-    body-statement
-	update-expr;
-}
-```
+We have `do-while`, `while`, `for` - none of these have an equivalent instruction. So they are implemented using a combination of jumps and conditional tests.
 
-	- So for loops are implemented with one of the while methods above.
+`do-while`:
+1. Label the start of the loop
+2. List of the instructions of the body
+3. Run a condition
+4. Have a conditional jump that will return to the beginning of the labeled blocked if the condition passes
+
+`while`:
+1. Two ways.
+2. First is called *Jump to middle*:
+        1. First an unconditional jump to a `test` block at the end of the loop
+        2. Another block called `loop` that contains the body of the loop
+        3. Run the condition
+        4. Conditionally jump to `loop` otherwise return
+3. Second is called *guarded do*:
+        1. Translates the code to a do-while by using a conditional branch to skip over the loop if the initial test fails.
+        2. So the test of the while is ran first, if its false, just jump to the end. Otherwise now go into do while mode, where the body is executed then the condition, then back to the body if it passes.
+        3. Generally used if a higher level of optimization is required/requested (by a gcc flag).
+
+`for`:
+- General form: `for (init-expr; test-expr; update-expr) body-statement`
+- Identical to:
+        ```
+        init-expr
+        while (test-expr) {
+            body-statement;
+            update-expr;
+        }
+        ```
+- So for loops are implemented with one of the while methods above.
 	
 #### 3.6.8 Switch Statements
-- Provides a multiway branching capability based on the value of an integer index.
-- Can be efficiently implemented using a jump table.
-	- An array where the entry `i` is the address of a code segment implementing the action the program should take when the switch index equals `i`.
-	- The code performs an array reference to get the target for the jump instruction.
-	- Benefit over lots of if statements is the time taken to perform the switch is independent of the numbers of switch cases.
-	- GCC will choose the implementation method based on the number of cases and the sparsity of case values (typically jump tables are used when the cases exceeds 3).
-- The compiler can do a bunch of optimizations based on the case values used (stripping the length of the integer being tested for, for example). It can take advantage of the nature of two's complement (it gets large when its negative) if the case values are all positive.
-- Implementation in assembly:
-	- Jump table defined by using the `.rodata` directive (read only data). It requires an `.align` directive to indicate the size of each address in the jump table.
-	- Within the section, list the jump labels. Each line is the next switch case.
+Provides a multiway branching capability based on the value of an integer index. Can be efficiently implemented using a jump table: an array where the entry `i` is the address of a code segment implementing the action the program should take when the switch index equals `i`. The code performs an array reference to get the target for the jump instruction.
+
+Benefit over lots of if statements is the time taken to perform the switch is independent of the numbers of switch cases. GCC will choose the implementation method based on the number of cases and the sparsity of case values (typically jump tables are used when the cases exceeds 3).
+
+The compiler can do a bunch of optimizations based on the case values used (stripping the length of the integer being tested for, for example). It can take advantage of the nature of two's complement (it gets large when its negative) if the case values are all positive.
+
+Implementation in assembly:
+1. Jump table defined by using the `.rodata` directive (read only data). It requires an `.align` directive to indicate the size of each address in the jump table.
+2. Within the section, list the jump labels. Each line is the next switch case.
 
 
 ### 3.7 Procedures
-Provide a way to package code that implements some functionality with a designated set of arguments and an optional return value.
+Provides a way to package code that implements some functionality with a designated set of arguments and an optional return value.
 
-Attributes that must be handled (suppose proc `P` calls proc `Q` and then `Q` return `P`):
+Attributes that must be handled (suppose proc `P` calls proc `Q` and then `Q` returns `P`):
 1. **Passing Control**: Program counter must be set to the starting address of the code for `Q` upon entry and then set to the instruction in `P` following the call to `Q` upon return.
 2. **Passing Data**: `P` must be able to provide one or more parameters to `Q` and `Q` must be able to return a value back to `P`.
 3. **Allocating and deallocating memory**: `Q` may need to allocate space for local variables when it begins and then free that storage before it returns.
@@ -811,9 +1124,9 @@ Attributes that must be handled (suppose proc `P` calls proc `Q` and then `Q` re
 x86 implementation of procedures involves a combination of special instructions and a set of conventions on how to use machine resources. It makes a big effort to minimize the overhead in calling procedures.
 
 **Key feature**: Most languages make use of last-in, first-out memory management (a stack).
-    - While `Q` is running, only it needs the ability to allocate new storage and to set up calls to another procedure. The calls prior to `Q` are suspended.
-	- When `Q` returns, storage it used needs to be freed.
-    - Therefore a stack can be used to manage the procedures in a program.
+- While `Q` is running, only it needs the ability to allocate new storage and to set up calls to another procedure. The calls prior to `Q` are suspended.
+- When `Q` returns, storage it used needs to be freed.
+- Therefore a stack can be used to manage the procedures in a program.
 	
 x86 provides a stack for implementing the call stack. `%rsp` points to the top element of the stack. Data can be stored and retrieved with `pushq` and `popq`. Space can be allocated be decrementing the pointer; space can be deallocated by incrementing the pointer. The region of space is called its *stack frame*.
 
@@ -869,7 +1182,6 @@ Nested arrays are stored in *row-major* order, meaning contiguous layout. The co
 #### 3.8.4 Fixed-Sized Arrays
 A bunch of optimizations can be made if arrays are fixed size. I'm not going to go into what they are - way too much information.
 
-
 #### 3.8.5 Variable-Sized Arrays
 Historically C didn't allow for variable sized arrays. But C99 introduced it. It's essentially the same as fixed-size, but the computed size of the array is loaded into a register and that's used as in calculating the offsets required when reading into the array.
 
@@ -904,14 +1216,14 @@ Often, with data types like structs, the natural layout of data could result in 
 - Every pointer has a value (except NULL(0) which indicates it points nowhere).
 - Pointers are created with &
 - Pointers are dereferenced with *
-- Arrays and pointers are closely related - array referencing is essentially the same as pointer arithmetic a dereference (*(a+3)), with both being scaled by the object size.
+- Arrays and pointers are closely related - array referencing is essentially the same as pointer arithmetic a dereference `(*(a+3))`, with both being scaled by the object size.
 - Casting pointers changes its type but not its value
 - Pointers can also point to functions
 
 
 #### 3.10.3 Out-of-Bounds Memory References and Buffer Overflow
 
-C does to perform any bounds checking on array references. And with local variables stored on the stack along with state information like register values and return address, unchecked memory access could read or write to parts of the program outside of the function.
+C does not perform any bounds checking on array references. And with local variables stored on the stack along with state information like register values and return address, unchecked memory access could read or write to parts of the program outside of the function.
 
 This is a buffer overflow. A typical case is allocated space for a string, but then a value larger is written to it, overflowing into the rest of the stack frame and beyond. Carefully crafting the bytes could lead to arbitrary code execution
 
@@ -927,7 +1239,7 @@ Apart of a class of techniques called *address-space layout randomization*, or A
 But it's still possible to circumvent this. An attacker can add a bunch of no-ops to force the PC to go through a large address space. As long as the exploit code is in there somewhere, it'll eventually hit. It's called the "nop sled".
 
 **Stack Corruption Detection**
-A way to detect bugger overruns. GCC can incorporate a *stack protector*. Idea is to store a canary value (also called guard value) in the stack frame between any local buffer and the rest of the stack state. Its value is random so there's no easy way to determine what it is.
+A way to detect buffer overruns. GCC can incorporate a *stack protector*. Idea is to store a canary value (also called guard value) in the stack frame between any local buffer and the rest of the stack state. Its value is random so there's no easy way to determine what it is.
 
 Before the register state and returning from the function, the program checks if the canary has been altered and if it has it aborts with an error.
 
@@ -943,15 +1255,13 @@ Checking whether a page is executable is done in hardware so has no penalty in e
 JIT compilers require dynamically executing code (like JVM) so it can't be offered the same protection.
 
 #### 3.10.5 Supporting Variable-Size Stack Frames
-Sometimes functions require space dynamically, such that the compiler cannot ahead of time determine the space required. E.g. using `alloca` or declaring a local array of variable size.
+Sometimes functions require space dynamically, such that the compiler cannot ahead of time determine the space required. E.g. using `alloc` or declaring a local array of variable size.
 
 To handle this, x86 uses `%rbp` to serve as a *frame pointer* (or base pointer, hence `bp` in `%rbp`). As it's a callee-saved register, it must be reverted after the function returns.
 
-`%rbp` is set to the stack pointer `%rsp` at the beginning of the procedure and remains there for the duration. Remember that the stack pointer is always pointing to the top of the stack so the only way it can be used to access local variables is by pointer addition of **known** sized local variables, as allocating dynamically would change the required offset to an unknown amount.
+`%rbp` is set to the stack pointer `%rsp` at the beginning of the procedure and remains there for the duration. Remember that the stack pointer is always pointing to the top of the stack so the only way it can be used to access local variables is by pointer addition of **known** sized local variables, as allocating dynamically would change the required offset to an unknown amount. It would essentially need to know how big the dynamically allocated space is so it could "jump" over that region to the local vars.
 
-But with `rbp`, it will always be pointing the the base of the stack and therefore can make use of dynamic allocation.
-
-Local variables are now referred to relative to the base pointer (as they have known sizes so their locations can be inferred). They are allocated at the beginning of the stack frame after the base pointer is saved. Then after local vars, any dynamic space is allocated (with the stack pointer still pointer to the top of the stack which is not determinable at compile time).
+But with `rbp`, it will always be pointing the the base of the stack, so local variables can now referred to relative to the base pointer (as they have known sizes so their locations can be inferred). They are allocated at the beginning of the stack frame after the base pointer is saved. Then after local vars, any dynamic space is allocated (with the stack pointer still pointer to the top of the stack which is not determinable at compile time).
 
 At the end of the function the stack pointer is set back to the base pointer (rather than use arithmetic as again the size of the stack is not known). This effectively deallocates the frame.
 
@@ -965,7 +1275,6 @@ With each extension there have been new registers, supporting 64, 128, and 256 b
 Starting with SSE2 in 2000, the media instructions have support floating point data, using single values in the low-order 32 or 64 bits of XMM or YMM registers (which go along with AVX). To use them, it needs to be in *scalar mode*.
 
 #### 3.11.1 Floating-Point Movement and Conversion Operations
-
 There are dedicated instructions for copying floating point data into the XMM/YMM registers and memory. There are also instructions for converting to integer values. When converting from floating-point to integer, they are truncated, rounding values towards zero.
 
 There's also a dedicated floating point register `%xmm0` for returning floating point data from procedures.
@@ -988,7 +1297,12 @@ There are two instructions for comparing floating point values, one for single, 
 An extra condition flag is used called parity flag which is used to indicated NaN (in integer it's used to indicate whether the result was even).
 
 ### 3.12 Summary
-We've seen how C and a compiler support complex program control and data manipulation via use of the low-level instructions and registers provided.
+> In this chapter, we have peered beneath the layer of abstraction provided by the C language to get a view of machine-level programming. By having the compiler generate an assembly-code representation of the machine-level program, we gain insights into both the compiler and its optimization capabilities, along with the machine, its data types, and its instruction set. In Chapter 5, we will see that knowing the characteristics of a compiler can help when trying to write programs that have efficient mappings onto the machine. We have also gotten amore complete picture of how the program stores data in different memory regions. In Chapter 12, we will see many examples where application programmers need to know whether a program variable is on the run-time stack, in some dynamically allocated data structure, or part of the global program data. Understanding how programs map onto machines makes it easier to understand the differences between these kinds of storage.
+>
+> Machine-level programs, and their representation by assembly code, differ in many ways from C programs. There is minimal distinction between different data types. The program is expressed as a sequence of instructions, each of which performs a single operation. Parts of the program state, such as registers and the run-time stack, are directly visible to the programmer. Only low-level operations are provided to support data manipulation and program control. The compiler must use multiple instructions to generate and operate on different data structures and to implement control constructs such as conditionals, loops, and procedures. We have covered many different aspects of C and how it gets compiled. We have seen that the lack of bounds checking in C makes many programs prone to buffer overflows. This has made many systems vulnerable to attacks by malicious intruders, although recent safeguards provided by the run-time system and the compiler help make programs more secure.
+> 
+> “We have only examined the mapping of C onto x86-64, but much of what we have covered is handled in a similar way for other combinations of language and machine. For example, compiling C++ is very similar to compiling C. In fact, early implementations of C++ first performed a source-to-source conversion from C++ to C and generated object code by running a C compiler on the result. C++ objects are represented by structures, similar to a C struct. Methods are represented by pointers to the code implementing the methods. By contrast, Java is implemented in an entirely different fashion. The object code of Java is a special binary representation known as Java byte code. This code can be viewed as a machine-level program for a virtual machine. As its name suggests, this machine is not implemented directly in hardware. Instead, software interpreters process the byte code, simulating the behavior of the virtual machine. Alternatively, an approach known as just-in-time compilation dynamically translates byte code sequences into machine instructions. This approach provides faster execution when code is executed multiple times, such as in loops. The advantage of using byte code as the low-level representation of a program is that the same code can be "executed" on many different machines, whereas the machine code we have considered runs only on x86-64 machines.
+
 
 ## Chapter 4 - Processor Architecture
 This chapter describes the architecture of a processor by creating a fake instruction set called Y86-64, a simplified version of x86-64.
