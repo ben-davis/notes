@@ -130,3 +130,57 @@ Estimation is usually either principled calculation (function of quantities you 
 E.g. pennies in a jar. Using the prior calculation of how many pennies in a roll of pennies and how tall those rolls are, we can estimate how many rolls make up the volume.
 
 A best practice in estimating is to use multiple methods to come up with an estimate to see if they are about equal.
+
+
+# Chapter 2 - Algorithm Analysis
+In order to understand the effectiveness of an algorithm, we need a way to compare it with others without actually implementing it. There are 2 important tools for this:
+
+1. The RAM model of computation
+2. The asymptotic analysis of computational complexity
+
+## 2.1 The RAM model of Computation
+Machine-independent algorithm design depends on a hypothetical machine called the *Random Access Machine*:
+
+1. Each *simple* operation (+, \*, -, =, if, call) takes exactly one time step
+2. Loops and subroutines are *not* considered simple operations. Instead they are a composition of many single-step ops.
+3. Each memory access takes exactly one time step. We also have as much memory as we need. The RAM model doesn't differentiate between cache or disk access.
+
+
+**Essentially: under RAM, we measure run time by counting the steps an algorithm takes.**
+
+Although the assumptions made above are demonstratably not how a machine operates in reality, the simplified model proves to be a very good measure of real world performance. Think of it like the flat earth model. We know it's not reality, but in our daily lives, building houses, putting up shelves, etc, we use this model as a reliable measure of reality. The RAM model is the same.
+
+### Best, Worst, and Average Complexity
+To use the RAM model to understand the real-world performance of an algorithm, we need to use it to determine performance of an algorithm over *all possible instances*.
+
+            │
+            │
+            │
+            │                                                       x
+            │                                                       x
+            │                                                       x
+            │                                                       x
+            │
+            │                                       x
+            │                                                       x
+Number of   │                                                       x
+  Steps     │                                       x               x
+            │                                       x               x
+            │                        x
+            │                                                       x
+            │
+            │                                                       x
+            │                                       x               x
+            │        x                                              x
+            │                        x              x               x
+            │
+            │                                                       x
+            │                                       x               x
+            │                                                       x
+            │
+            │
+            └────────────────────────────────────────────────────────────
+
+                     1               2              3               4
+
+                                    Problem Size
