@@ -153,6 +153,7 @@ Although the assumptions made above are demonstratably not how a machine operate
 ### Best, Worst, and Average Complexity
 To use the RAM model to understand the real-world performance of an algorithm, we need to use it to determine performance of an algorithm over *all possible instances*.
 
+```
             │
             │
             │
@@ -184,3 +185,4 @@ Number of   │                                                       x
                      1               2              3               4
 
                                     Problem Size
+```
