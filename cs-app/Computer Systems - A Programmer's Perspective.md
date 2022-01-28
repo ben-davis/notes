@@ -1310,33 +1310,31 @@ This chapter describes the architecture of a processor by creating a fake instru
 I won't make extensive notes on the ISA specifically, but will make notes on the new information it introduces.
 
 ### 4.1.3 - Instruction Encoding
-Each instruction, along with an data required for that instruction, needs to be encoded. This is determined by the ISA.
+Each instruction, along with any data required for that instruction, needs to be encoded. This is determined by the ISA.
 
-Instructions can reuse code from other instructions, if there share functionality. This is determined by the lower-order 4 bits in the initial byte of the instruction.
+How the bytes in an instruction are used:
+1. Instructions can reuse code from other instructions, if there share functionality. This is determined by the lower-order 4 bits in the initial byte of the instruction.
+2. Another byte can be used to specify registers that should be used as operands.
+3. Another byte that is used for some instructions is a *constant word*, used for immediate data.
 
-Another byte can be used to specify registers that should be used as operands.
+**All instructions must have a unique interpretation.**
 
-Another byte that is used for some instructions is a *constant word*, used for immediate data.
+There are two main types of instructions sets, *CISC* and *RISC*:
 
-All instructions must have a unique interpretation.
+1. *CISC* are complex instructions sets like x86-64 and represent a gradual increase in complexity as new features were added to ISAs. Instructions can be in the thousands.
+2. *RISC* is the opposite worldview, where the instruction set is specifically restricted, allowing for much simpler and efficient hardware. Instructions are typically less than 100 (nowadays RISC is more complex with more instructions but still small relative to CISC).
 
-RISC vs CISC
-- CISC are complex instructions sets like x86-64 and represent a gradual increase in complexity as new features were added to ISAs. Instructions can be in the thousands.
-- RISC is the opposite worldview, where the instruction set is specifically restricted, allowing for much simpler and efficient hardware. Instructions are typically less than 100 (nowadays RISC is more complex with more instructions).
-- Generally this means that compilers targeting RISC have to do a lot more work than CISC as complex behaviors have to be constructed from simpler instructions rather than using an existing one provided by the ISA.
-- Examples:
-	- RISC have no condition codes, instead requiring the result of a condition be stored in an explicitly provided register.
-	- Simple addressing, just base and displacement.
+Generally this means that compilers targeting RISC have to do a lot more work than CISC as complex behaviors have to be constructed from simpler instructions rather than using an existing one provided by the ISA. For example, RISC ISAs have no condition codes, instead requiring the result of a condition be stored in an explicitly provided register. They also have simple addressing, just base and displacement.
 
 
 ### 4.1.4 Exceptions
-A program's state can be accessing via a status code, with an enum of states based on what's happening. E.g. invalid memory access, invalid instruction, etc.
+A program's state can be accessed via a status code, with an enum of states based on what's happening. E.g. invalid memory access, invalid instruction, etc.
 
 
 ### 4.2 Logic Design and the Hardware Control Language HCL
 0s and 1s are represented by either the presence of a high or low voltage, with high = 1v and low = 0v.
 
-Three major components required for a digital system:
+Three major components are required for a digital system:
 1. Combinational logic: compute functions on bits
 2. Memory elements: to store bits
 3. Clock signals: regulate updating of memory elements
@@ -1373,13 +1371,13 @@ To create *sequential circuits* we need devices that store information represent
 
 Storage devices are controlled by a single *clock*, a periodic signal that determines when new values are loaded into devices.
 
-Two types of memory devices:
-1. *Clocked registers*: store individual bits or words. Clock signal controls when to change state based on input.
+There are two types of memory devices used in circuits:
+1. *Clocked registers*: store individual bits or words. The clock signal controls when to change state based on the clocked register's input.
 2. *Random access memories*: stores multiple words addressable by an address.
 
 In hardware a register means a storage device directly connected to the circuit by its input and output wires. In machine-level programming, registers represent a small collection of addressable words in the CPU.
 
-A hardware register stores its input as internal state, but only updates when the clock signal is "high", even if the input is different. Registers serve as barriers between the logic in a circuit.
+A hardware register stores its input as internal state, but only updates when the clock signal is "high", even if the input is different. Registers serve as barriers between the logic in a circuit - they stop the signal from flowing through the circuit unimpeded.
 
 Registers are written to and read from via the *register file*, an array of registers containing multiple *ports* that allow the simultaneous updating multiple registers. The ports define which port and what to update it with and the update happens with the rising of the clock signal.
 
@@ -1389,9 +1387,9 @@ Registers are written to and read from via the *register file*, an array of regi
 In general, processing an instruction involves a number of operations. We organize these into a sequence of stages, with each instruction following a uniform sequence of stages. Having uniform stages allows the best use of the hardware.
 
 Operations:
-1. **Fetch**: Reads bytes of an instruction from memory, using the program counter as the memory address. From the instruction, two 4-bit portions are extracted, the first called the icode (the instruction code) and the second the ifun (the instruction code). It can also fetch a register specific byte or an 8-byte constant word. It then computes the next instruction which is simply the PC plus the length of the fetched instruction.
+1. **Fetch**: Reads bytes of an instruction from memory, using the program counter as the memory address. From the instruction, two 4-bit portions are extracted, the first called the icode (the instruction code) and the second the ifun (the instruction function). It can also fetch a register specific byte or an 8-byte constant word. It then computes the next instruction which is simply the PC plus the length of the fetched instruction.
 2. **Decode**: Reads up to two operands of the instruction from the register file.
-3. **Execute**:  The ALU performs the operation specified by the instruction (according to *ifun*), computes the effective address of a memory reference, or increments or decrements the stack pointer. Condition codes are also possible set.
+3. **Execute**:  The ALU performs the operation specified by the instruction (according to *ifun*), computes the effective address of a memory reference, or increments or decrements the stack pointer. Condition codes are also possibly set.
 4. **Memory**: May write data to memory or read data from memory.
 5. **Write back**: Writes up to two results to the register file.
 6. **PC update**: Set to the address of the next instruction.
@@ -1400,7 +1398,7 @@ A processor loops indefinitely, performing these stages.
 
 **Note:** 5 stages were typical of a 1980s processor. Nowadays they can have > 15.
 
-It's up to the processor map instructions it provides in its ISA to these stages.
+It's up to the processor to map the instructions it provides in its ISA to these stages.
 
 ### 4.3.2 Hardware Structure
 A sequential CPU would treat each stage a sequential operation, with each stage happening in order. The building of a sequential CPU requires a combination of hardware registers with values passed via single bit wires, hardware units (ALU, memory, etc) that perform some dedicated function, and control logic that switch between input signals.
@@ -1427,7 +1425,7 @@ So essentially all CPU operations are either combinational logic or controlled b
 The problem with sequential CPUs is that the clock cycle has to be slow enough to allow signals to propagate through the circuits before starting the next clock cycle. That's where pipelining comes in.
 
 ### 4.4 General Principles of Pipelining
-Pipelined CPUs act like a car wash: multiple cars can be in the process of being washed, with each in a different stage. Each car moves through each stage before finishing. A car mast pass through each stage, even if it doens't require it, like waxing.
+Pipelined CPUs act like a car wash: multiple cars can be in the process of being washed, with each in a different stage. Each car moves through each stage before finishing. A car must pass through each stage, even if it doens't require it, like waxing.
 
 A key feature of pipelining is that increases throughput in the system but it may increase latency (as it would be quicker to skip steps it doesn't require).
 
@@ -1443,21 +1441,22 @@ It's worth noting that the stages of a pipeline might differ based on the design
 ### 4.5 Building a Pipelined CPU
 I won't go into detail here, just some stray notes from the entire 4.5 section.
 
-- A principle of CPU design is *circuit retiming*: changes to state representation without changing logical behavior. An example of this is in the PC. In the ISA it exists concretely, but in an implementation it might be dynamically created via pipeline registers.
-- We must account for dependencies between instructions. E.g. a cmp instruction relies on the output of a previous instruction.
+A principle of CPU design is *circuit retiming*: changes to state representation without changing logical behavior. An example of this is in the PC. In the ISA it exists concretely, but in an implementation it might be dynamically created via pipeline registers.
+
+We must account for dependencies between instructions. E.g. a cmp instruction relies on the output of a previous instruction.
 
 #### Branch Prediction
 Ideally, we should be issuing a new instruction per cycle, meaning that for each cycle the execute stage is executing something. So that means we need to know the next instruction right after fetching the current instruction. If the instruction is a conditional instruction, we can't know for sure what the next instruction will be, so we need to use branch prediction.
 
-- For conditional instructions, this is predicting that either a jump is executed or not.
-- For predicting the PC after a `ret` instructions is much more complicated as it could really be any word on top of the stack.
+1. For conditional instructions, this is predicting that either a jump is executed or not.
+2. For predicting the PC after a `ret` instructions is much more complicated as it could really be any word on top of the stack.
 
 #### Hazards
-Data dependencies / hazard: when an instruction relies on the output of a previous instruction
-Control dependencies / hazard: when the logic of an instruction is dependent on the output of a previous instruction.
+**Data dependencies / hazard**: when an instruction relies on the output of a previous instruction
+**Control dependencies / hazard**: when the logic of an instruction is dependent on the output of a previous instruction.
 
 ##### Avoiding data hazards by stalling
-Holding back one ore more instructions in the pipeline until the hazard condition has passed. Done via no ops (called bubbles). Not very efficient.
+Holding back one or more instructions in the pipeline until the hazard condition has passed. Done via no ops (called bubbles). Not very efficient.
 
 ##### Avoiding data hazards by forwarding 
 Instead of waiting for writes to be executed, instead we can forward the value to write into a pipeline register. Requires additional data connections and control logic to the basic hardware structure.
@@ -1479,10 +1478,11 @@ External examples:
 1. Mouse moved
 2. Network packet received on the network interface.
 
-- Typically exception handing would invoke an OS-level handler.
-- Exceptions can be triggered simultaneously across multiple stages of the pipeline. 
-- Pipeline register's status field is used to store exception states. These flow through to the write-back stage of the pipeline, at which point they're handled. This allows mispredicted branches to raise exceptions without being handled (as we want to cancel mispredicted branches).
-- Generally all exception handling is designed to guarantee that no instructions after an excepting instruction are executed. Due to pipelining this is complex but possible by a combination of inserting no-op instructions or the setting of pipeline registers so that the stage that writes instruction outputs to memory is never reached.
+Exceptions can be triggered simultaneously across multiple stages of the pipeline. Typically, exception handing would invoke an OS-level handler.
+
+Pipeline register's status field is used to store exception states. These flow through to the write-back stage of the pipeline, at which point they're handled. This allows mispredicted branches to raise exceptions without being handled (as we want to cancel mispredicted branches).
+
+Generally all exception handling is designed to guarantee that no instructions after an excepting instruction are executed. Due to pipelining this is complex but possible by a combination of inserting no-op instructions or the setting of pipeline registers so that the stage that writes instruction outputs to memory is never reached.
 
 In order for bubbles to be inserted into pipeline registers, in addition to the normal input signal, they will also have two control inputs *stall* and *bubble*. When both are 0, normal execution happens (input signal is loaded into state). When stall is 1, state will remain its previous value. When bubble is 1 the state is set to some fixed *reset configuration* (based on the specific bytes that will cause the stage to be a no-op).
 
