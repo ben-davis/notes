@@ -1496,17 +1496,17 @@ Generally there is a trade-off between readability & simplicity and program perf
 ### 5.1 Capabilities and Limitations of Optimizing Compilers
 GCC has different modes of optimization, starting with `-0g`, `-01` up to `-03`.
 
-The compiler must make sure these optimizations are safe: they don't change the behavior of the program.
+The compiler must make sure these optimizations are safe: they can't change the behavior of the program.
 
 **Optimization Blockers**
-Memory aliasing is the case where two pointers point to the same address. That capability of C means the browser must assume that any two different pointers are actually aliases. This removes any optimizations that might attempt to simply pointer use.
+Memory aliasing is the case where two pointers point to the same address. That capability of C means the compiler must assume that any two different pointers are actually aliases. This removes any optimizations that might attempt to simplify pointer use.
 
 Restrictions that prohibit certain optimizations are called *optimization blockers*.
 
 Another type of blocker is due to function calls. Functions have side effects so code that calls a function can't be optimized in a way that reduces the number of times that function is called as there could be unknown side effects. Inlining functions is an option as it allows further optimization.
 
 ### 5.2 Expressing Program Performance
-Rather than using timing, a useful way to express loop performance in an iterative program is in cycles per element (CPE), the number cycles taken to per element in a vector.
+Rather than using timing, a useful way to express loop performance in an iterative program is in cycles per element (CPE), the number of cycles taken to iterate over each element in a vector.
 
 (SKIPPING 5.3 as it contains no new info)
 
@@ -1523,29 +1523,28 @@ If, during an iteration, a memory reference is used to read or write data, then 
 
 An example might be where a loop is used to accumulate a value: rather than writing via a memory reference, it instead just uses a variable in the stack (which the compiler can choose to store in a register).
 
-### 5.7 Understanding Modern Processors
+### 5.7 Understanding Modern Processors (TODO: this section could do with expanding)
 Modern processors use instruction-level parallelism to evaluate multiple instructions simultaneously. Understanding this allows us to further optimize our programs.
 
-Two lower bounds that limit performance:
-1. Latency bound: where a series of operations must be performed sequentially, limiting the instruction-level parallelism capabilities of the processor.
-2. Throughput-bound: limited only by the raw computational capacity of the processor's functional units. The ultimate limit on program performance.
+There are two lower bounds that limit performance:
+1. *Latency bound*: where a series of operations must be performed sequentially, limiting the instruction-level parallelism capabilities of the processor.
+2. *Throughput-bound*: limited only by the raw computational capacity of the processor's functional units. The ultimate limit on program performance.
 
-**Superscaler**: more than one instruction per cycle
-**Out of order**: ability to execute instructions out of order but still maintain sequential appearance to programmers.
+Modern CPUs are described as being:
+1. **Superscaler**: they have the ability to execute more than one instruction per cycle.
+2. **Out of order**: they have the ability to execute instructions out of order but still maintain sequential appearance to programmers.
 
-Two parts to achieve this:
+There are two components required to achieve this:
 1. *instruction control unit* (ICU) - reads a sequence of instructions and generates the primitive operations to perform
 2. *execution unit* (EU) - the unit that executes those primitive operations
 
-ICU reads instructions from an instructions cache, containing the most recent instructions. It will fetch instructions well ahead of the current instruction. This requires branch prediction, which allows for *speculative execution*.
+The ICU reads instructions from an instructions cache, containing the most recent instructions. It will fetch instructions well ahead of the current instruction. This requires branch prediction, which allows for *speculative execution*. Instruction decoding takes actual instructions and converts them into a set of primitive operations (micro-operations). E.g. adding two numbers, reading data from memory, etc.
 
-Instruction decoding takes actual instructions and converts them into a set of primitive operations (micro-operations).
-
-The EU fetches instructions (multiple per cycle) and then dispatches them to function units designed for a particular task. 
+The EU fetches these operations (multiple per cycle) from the instruction fetch unit and then dispatches them to function units designed for a particular task. 
 
 With speculative execution, instructions are performed but writes to registers or data memory are stalled until the branch prediction is proved correct.
 
-i7 Haswell units:
+**i7 Haswell function units and their capabilities**:
 0. Integer arithmetic, floating-point multiplication, integer and floating-point division, branches
 1. Integer arithmetic, floating-point addition, integer multiplication, floating-point multiplication
 2. Load, address computation
@@ -1555,16 +1554,17 @@ i7 Haswell units:
 6. Integer arithmetic, branches
 7. Store address computation
 
-Elaborate data forwarding is used to speed up communication amongst the units. It's also used to allow the speculative execution of dependent operations without writing to registers.
+We can see that due to multiple units having the same capabiltiies, it is possible to do some operations in parallel (load, arithmetic, etc).
 
-Functional units can be pipelined into stages to allow parallelism within the unit (e.g. adders).
-- Of interest: divider units can't be pipelined so require an operation to fully finish before another one begins.
+A *retirement unit* is used to ensure that any operations for a given instruction happen sequentially. It manages speculative execution by flushing any operations that happen due to branch misprediction. Elaborate data forwarding is used to speed up communication amongst the units. It's used by the retirement unit to allow the speculative execution of dependent operations without writing to registers.
 
-Unit performance is described by operations per cycle (the throughput).
+Functional units can be pipelined into stages to allow parallelism within the unit (e.g. adders). Divider units can't be pipelined so require an operation to fully finish before another one begins.
+
+Unit performance is described by operations per cycle (the throughput). 
 
 
 ### 5.8 Loop Unrolling
-Program transformation that reduces the number of iterations for a loop by increasing the number of elements computed on each iteration.
+Program transformation that reduces the number of iterations for a loop by increasing the number of elements computed on each iteration. So each iteration iterates over 2 elements and each iteration we compute both the `ith` value and the `ith+1` - 2 x 1 loop unrolling. This can be generalized to k x 1 loop unrolling.
 
 Two benefits:
 1. Reduces the number of operations that do not contribute directly to the program result, such as loop indexing and conditional branching.
@@ -1579,9 +1579,19 @@ Due to a processor's ability to pipeline within its units (say multiplication), 
 
 One example of this is where the loop is accumulated in a variable. One variable removes the ability to pipeline. Multiple accumulations based on odd/even allows two iterations of the loop to be computed in parallel (requires the accumulation operation to be associative and commutative). Called 2 x 2 loop unrolling.
 
+E.g.
+
+```c
+/* Combine 2 elements at a time */
+for (i = 0; i < limit; i+=2) {
+    acc0 = acc0 OP data[i];
+    acc1 = acc1 OP data[i+1];
+}
+```
+
 Essentially we need to write our programs in a way that maximize the operations parallelizable per unit.
 
-By changing the order in which vector elements are combined with a value, called *reassociation transformation*, we can change how the operation is performed and greatly increase performance. Mostly this is because it can decrease the number of operations required to compute the result. Compilers will try to do this for integer operations, but not floating point as they are not associative.
+There is another way to break the sequential depedencies of our programs and therefore allow more parallelization. By changing the order in which vector elements are combined with a value, called *reassociation transformation*, we can change how the operation is performed and greatly increase performance. Mostly this is because it can decrease the number of operations required to compute the result. Compilers will try to do this for integer operations, but not floating point as they are not associative.
 
 ### 5.11 Other limiting factors
 - **Register spilling**: where the number of temporary values in a loop exceeds available registers. This puts a limit on things like loop unrolling.
@@ -1591,7 +1601,7 @@ By changing the order in which vector elements are combined with a value, called
 Not worth going into detail. Essentially dependencies between read and writes limits pipelining functionality within store/load units. Register-only store/load can automatically be optimized by the compiler to decrease latency. For memory-based store/loads, it's up to the programmer.
 
 ### 5.13 Real-world performance improvement techniques
-1. **High-level design**: choose data structures and algorithms that don't have asymptomatically poor performance.
+1. **High-level design**: choose data structures and algorithms that don't have asymptomatically poor performance. Obviously The Algorithm Design Manual has a lot more detail here.
 2. **Coding**:
 	1. Eliminate excessive function calls
 	2. Eliminate unnecessary memory references (use temporary variables)
@@ -1600,11 +1610,13 @@ Not worth going into detail. Essentially dependencies between read and writes li
 	2. Find ways to increase instruction-level parallelism such as multiple accumulators and reassociation.
 	3. Rewrite conditional operations in a functional style to enable compilation via conditional data transfers.
 
+### 5.14
+Not making notes. Essentially the message is: use a profiler to understand the performance of your program.
+
 ### 5.15
-- There are things that inherently restrict a compilers ability to optimize our program. Instead it's up to the programmer to best present the program in away amenable to optimization.
-- Understanding data dependencies of the critical paths of our program helps us understand the latencies affecting our computation and the throughput we can expect.
-- We should aim to write branching logical in a way that encourages conditional data transfers.
-- We should aim to use temporary variables more often that memory references to avoid costly memory usage and encourage register usage.
+There are things that inherently restrict a compilers ability to optimize our program. Instead it's up to the programmer to best present the program in away amenable to optimization. Understanding data dependencies of the critical paths of our program helps us understand the latencies affecting our computation and the throughput we can expect.
+
+We should aim to write branching logical in a way that encourages conditional data transfers. And we should aim to use temporary variables more often that memory references to avoid costly memory usage and encourage register usage.
 
 
 ## Chapter 6 The Memory Hierarchy
