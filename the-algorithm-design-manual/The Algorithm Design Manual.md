@@ -466,3 +466,380 @@ These techniques are not used in the main text of the book and are considered op
 
 ## Chapter Notes
 Little Oh notation: `f(n) = o(g(n))` if `g(n)` dominates `f(n)`. So asking for `o(n²)` means an algorithm that is better than quadratic in the worst case.
+
+
+# Chapter 3 - Data Structures
+Proper data structures are as crucial to performance as the algorithm itself. Although data structures can be swapped out in order to improve performance, it's better to design your algorithm around the appropriate data structure from the beginning.
+
+There are 3 important *abstract data types* that will be focused on in this chapter:
+1. Containers
+2. Dictionaries
+3. Priority queues
+
+Each of these have many concrete data types. Some of those will be discussed in this chapter.
+
+## 3.1 Contiguous vs Linked Data Structures
+Data structures can be classified as either *contiguous* or *linked*, depending upon whether they are based on arrays or pointers.
+
+*Contiguous allocated structures* are composed of single slabs of memory. They include:
+1. Arrays
+2. Matrices
+3. Heaps
+4. Hash tables
+
+*Linked data structures* are composed of distinct chunks of memory bound together by *pointers* and include:
+1. Lists
+2. Trees
+3. Graph adjacency lists
+
+### Arrays
+Arrays are the fundamental contiguous structure. They are fixed-sized data records such that each element can be efficiently located by its index or (equivalently) address.
+
+Advantages:
+1. *Constant-time access given the index*: As an index -> address, we can arbitrary data items instantly provided we know the index.
+2. *Space efficiency*: Arrays are pure data - no data is wasted on linkage information. End-of-record info is not needed as arrays are built from fixed-sized records.
+3. *Memory locality*: They have excellent memory locality when iterated through sequentially - common in programming. Physical continuity between successive data access helps exploit the high-speed *cache memory* on modern computer architectures (L1 cache and all that).
+
+Downside: cannot adjust their size in the middle of execution. We can compensate by allocating more than we initially need, but this is wasteful.
+
+A better technique is to use dynamic arrays. These start with a given array size and double when we run out of space (when `i` == `j - 1` if `j` is the length of the array). This seems wasteful, but surprisingly is not.
+
+If we assume we start at an array of 1 and double until we get to `n`, it takes `ln(n)` (due to doubling every iteration) number of doubles until we get there. Plus 1 more when `i=n`. Each iteration involves `2ⁱ⁻¹` copy operations. So the complexity is given by the sum of `2ⁱ⁻¹` terms starting from `i=1` to `i=lg(n)`. This works out and simplified to `2n`. This means that each element is moved on average twice. ANd the total work in managing the array is `O(n)`, the same cost of allocated a fixed sized array.
+
+What we lose with dynamic arrays is the guarantee that an insertion is constant time in the *worst case*. But all accesses and *most* insertions will still be constant. What we get is a promise that the nth element insertion will be completed quickly enough to give `O(n)` total effort expended in managing the array. This is an example of *amortized* guarantees, which occur frequently in data structure analysis.
+
+### Pointers and linked data structures
+*Pointers* are the connections that hold the pieces of linked structures together. They represent the address of a location in memory.
+
+A linked list is defined by the following struct:
+
+```c
+typedef struct list {
+    item_type item; /* data item */
+    struct list *next; /* point to successor */
+} list;
+```
+
+1. Each node in the data structure (here `list`) contains one or more data fields (here `item`) that stores the data.
+2. Each node contains a pointer to another node (`next`). Much of the data in linked data structures therefore is devoted to pointers, not data.
+3. We need a pointer to the head of the structure.
+
+The list is the simplest linked data structure. There are three basic operations supported by lists:
+1. Searching
+2. Indexing
+3. Deleting
+
+In *doubly linked lists*, each node points to the predecessor and its successor, which simplifies certain operations at the expense of extra space.
+
+#### Searching a list
+Follow the links either recursively or iteratively until you find the element, or not.
+
+#### Insertion into a list
+Inserting into an unordered list simply involves adding it to the front of the list and updating some pointers.
+
+#### Deletion from a list
+We first find a pointer to the predecessor of the element to delete, update its next pointer to the element after the element to delete, then free the deleted element's memory.
+
+### Linked vs static arrays
+Advantages of linked structures over static arrays:
+1. Overflow of linked structures never occur unless we run out of memory.
+2. Insertion and deletion are simpler.
+3. With large records, moving pointers is easier and faster than moving the items themselves.
+
+Advantages of static arrays:
+1. Space efficiency: no wasted space holding pointers.
+2. Efficient random access to items in arrays.
+3. Better memory locality and cache performance that random pointer jumping.
+
+Both can be though of as recursive structures:
+- *Lists*: Chopping the first element from a list leaves another list. Same or strings.
+- *Arrays*: Splitting an array gives two smaller arrays.
+
+This insight leads to simpler list processing and efficient divide-and-conquer algorithms such as quicksort and binary search.
+
+## 3.2 Containers: Stacks and Queues
+*Containers*: an abstract data type that permits storage and retrieval of data items *independent of content*. They store objects in an organized way that follow specific access rules. They are distiguished by the particular retrieval order they support.
+
+Two important types:
+1. *Stacks* support retrieval by LIFO. Easy to implement and are very efficient, so are good to use when retrieval order doesn't matter (e.g. processing batch jobs). The two *put* and *get* operations are `push` and `pop` which insert and remove from the top of the stack. LIFO exists in lots of places in the world. Tends to occur in recursive algorithms.
+2. *Queues* support retrieval by FIFO. Jobs processed in FIFO order minimize the *maximum* time spent waiting. Average time is the same whether we use FIFO or LIFO. They are slightly tricker to implement than stacks so are good when insertion order matters. The *put* and *get* operations are usually called *enqueue* and *dequeue* which insert at the back and remove from the front of the queue, respectively.
+
+## 3.3 Dictionaries
+The *dictionary* date type permits access to data items by content. You stick an item into a dictionary so you can find it when you need it. The primary operations are:
+1. *Search (D, k)*: Given a search key *k*, return a pointer to an element in the dictionary *D* whose key value is *k*, if it exists.
+2. *Insert (D, x)*: Given a data item *x*, add it to the dictionary *D*.
+3. *Delete (D, x)*: Given a pointer *x* to a given data item in the dictionary *D*, remove it from *D*.
+
+Certain dictionaries structures efficiently support other useful operations:
+1. *Max(D)* or *Min(D)*: Retrieve the item with the largest (or smallest) key from *D*. With this the dictionary can serve as a priority queue.
+2. *Predecessor(D, x)* or *Succcessor(D, x)*: Retrieve the item from *D* whose key is immediately before (or after) item *x* in *sorted* order. With this we can iterate through the dictionary in sorted order.
+
+Dicitonaries are often used for common data processing tasks. E.g. we could easily remove all duplicates names from a mailing list (construct the dictionary from the names (avoiding dupes by *search*), use *min* and *max* to iterate through using *successor*).
+
+### Implementing dictionaries via arrays
+Imagine we implement a dictionary via both an array and a sorted array. Below are the complexities of each operation:
+
+| Dictionary Operation | Unsorted Array | Sorted Array |
+|---|---|---|
+| Search(A, k) | O(n) | O(logn) |
+| Insert(A, x) | O(1) | O(n) |
+| Delete(A, x) | O(1) | O(n) |
+| Successor(A, x) | O(n) | O(1) |
+| Predecessor(A, x) | O(n) | O(1) |
+| Minimum(A) | O(n) | O(1) |
+| Maximum(A) | O(n) | O(1) |
+
+It's obvious why the above are so, so I won't go into detail. Just note that `O(logn)` for sorted arrays is due to using binary search. 
+
+**Remember**: there are often trade-offs when considering which structures to use. Often increased efficiency on some set of operations will reduce efficiency on another set.
+
+### Implementing dictionaries via linked lists
+
+**Remember**: successor and predecessor refer to the keys in sorted order.
+
+| Dictionary Operation | Single linked unsorted | Singly linked sorted | Doubly linked unsorted | Doubly linked sorted |
+|---|---|---|---|---|
+| Search(L, k) | O(n) | O(n) | O(n) | O(n) |
+| Insert(L, x) | O(1) | O(n) | O(1) | O(n) |
+| Delete(L, x) | O(n)\* | O(n)\* | O(1) | O(1) |
+| Successor(L, x) | O(n) | O(1) | O(n) | O(1) |
+| Predecessor(L, x) | O(n) | O(n) | O(n) | O(1) |
+| Minimum(L) | O(1)\ | O(1) | O(n) | O(1) |
+| Maximum(L) | O(1)\* | O(1)\* | O(n) | O(1) |
+
+Most of these are self-explanatory, with the exception of those with an \*.
+
+1. \*Deletion: Because we need to correct the link of the prior node in the list, when deleting from a singly linked list we need to traverse the list to the find the predecessor.
+2. \*Maxmium: Usually for both singly and doubly linked list, we have to traverse the list to get to the tail, where the maximum lives. But we can maintain a pointer to the tail to, allowing O(1) for *Maxmimum(L)*. We just have to pay the maintenance cost on each insert and deletion to ensure the pointer remains up to date. For doubly linked lists this is O(1) as we just need to check if the `last` pointer's `last->next` is still `NULL` on inserts and change the `last->next` to `last->predecessor` if `last` is deleted. For singly linked lists, we just need to charge the cost to deletion operations. One linear sweep per deletion gives us constant time for max/min.
+
+## 3.4 Binary Search Trees
+So far the data structures have had fast search or flexible updating, but not both:
+1. Unsorted, doubly linked lists support insertion and deletion in O(1) but search is linear in the worst case.
+2. Sorted arrays support binary search (log query times) but at the cost of linear updates.
+
+As binary search requires fast access to two element: median elements above and below the given node. Combining these ideas forms a linked list with two pointer nodes. This is the basic idea of binary search trees.
+
+A *rooted binary tree* is defined as being either empty or consisting of a node called the *root* along with two rooted binary trees called the left and right subtrees. Order of the subtrees matters.
+
+In a binary search tree, each node is uniquely labeled `x`, with its left subtree all with labels `< x`, and its right subtree all with labels `> x`.
+
+### Implementing Binary Search Trees
+Nodes have *left* and *right* pointer fields, with an optional *parent* pointer, along with a data field:
+
+```c
+typedef struct tree {
+    item_type item;
+    struct tree *parent;
+    struct tree *left;
+    struct tree *right;
+} tree;
+```
+
+#### Searching in a Tree
+Super simple:
+
+```c
+
+tree *search_tree(tree *l, item_type x) {
+  if (l == NULL) {
+    return (NULL);
+  }
+
+  if (l->item == x) {
+    return (l);
+  }
+
+  if (x < l->item) {
+    return (search_tree(l->left, x));
+  } else {
+    return (search_tree(l->right, x));
+  }
+}
+```
+
+This runs in `O(h)` where `h` is the height of the tree.
+
+#### Finding the Min and Max Elements in a Tree
+By definition the min and max live in the left-most and right-most descendants of the root, respectively.
+
+```c
+tree *find_minimum(tree *t) {
+  tree *min; /* pointer to minimum */
+
+  if (t == NULL) {
+    return (NULL);
+  }
+
+  min = t;
+  while (min->left != NULL) {
+    min = min->left;
+  }
+  return (min);
+}
+```
+
+#### Traversal in a Tree
+Visiting everynode in a rooted binary tree is important in many algorithms. It's a special case of traversing all nodes and edges in a graph.
+
+A simple application of traversal is listing all the labels in the tree. Doing so in *sorted* order is especially trivial due to the structure of the tree.
+
+```c
+void traverse_tree(tree *l) {
+  if (l != NULL) {
+    traverse_tree(l->left);
+    process_item(l->item);
+    traverse_tree(l->right);
+  }
+}
+```
+
+It obviously runs in `O(n)`.
+
+
+#### Insertion in a Tree
+Due to the structure of the tree, there is exactly one place to place a given node.
+
+To implement this recursively, we need:
+1. `l`: A pointer to the current node we're searching
+2. `x`: The element to insert
+3. `parent`: A pointer to the parent so we can hook up the new node to its parent
+
+The algorithm then checks if `l` is `NULL`, if it is it means we've found the place to insert, otherwise search the next subtree (either left or right depending on the value of x):
+
+```c
+void insert_tree(tree **l, item_type x, tree *parent) {
+  tree *p; /* temporary pointer */
+
+  if (*l == NULL) {
+    p = malloc(sizeof(tree));
+    p->item = x;
+    p->left = p->right = NULL;
+    p->parent = parent;
+
+    *l = p;
+    return;
+  }
+
+  if (x < (*l)->item) {
+    insert_tree(&((*l)->left), x, *l);
+  } else {
+    insert_tree(&((*l)->right), x, *l);
+  }
+}
+```
+
+Creating the node and linking it is `O(1)` but searching is `O(h)`.
+
+#### Deletion from a Tree
+There are 3 cases:
+1. The node has no children: easy just remove it and unlink from the parent.
+2. The node has a single child: easy just remove it and link the parent to the deleted node's child.
+3. The node has two children: tricky, but there's an elegant solution: relabel the deleted node with the label of it's immediate success in sorted order. This is the left-most node in the right subtree of the node we're deleting. This results in a properly label tree.
+
+It takes `O(h)` in the worst-case (the two children requires a search).
+
+#### Performance of Binary Search
+When implemented using binary search trees, each dictionary operation takes `O(h)`. The smallest height we can get is when the tree is perfectly balanced which means that `h = lg(n)`.
+
+The balance, or lackof, depends on insertion order. The data structure has no control over where to insert as there is exactly one correct place for it to live. It entirely depends on the order in which we're given them. E.g. if we used a list of sorted numbers for insertion, we'd have a tree with only the right-most subtrees being used.
+
+So therefore the heights of binary trees range from `lg(n) -> n`. In a complete random case (where we consider all `n!` possible insertion orders), we average to `lg(n)` so all is good. So random search trees are okay.
+
+
+#### Balanced Search Trees
+Random search trees are *usually* good. But what if we adjusted the tree a little after each insertion/deletion so that a balanced tree always remains?
+
+There are sophisticated algorithms (which we get to later in the book) that efficiently rebalance, giving us `O(lg(n))` for the insert, delete, query operations.
+
+It's usual to exploit balanced search trees and their `O(lg(n))` behaviour by treating them as a black box. It's possible for example to use them to sort a list in `O(nlgn)` using only a subset of the dictionary operations.
+
+
+## 3.5 Priority Queues
+We often need to process items in a specific order. A job queue that ranks jobs in importance for example. Rather than using a regular array and resorting on each new job insertions, we can use the much more cost-effective *priority queue*.
+
+There are 3 primary operations:
+1. *Insert(Q, x)*: Give item *x*, insertt it into priority queue *Q*.
+2. *Find-Minimum(Q) / Find-Maximum(Q)*: Return a pointer to the item whose key is the smallest or largest among all keys.
+3. *Delete-Minimum(Q) / Delete-Maximum(Q)*: Remove the item whose key value is the min or max from Q.
+
+Example: dating. New people are introduced into our lives but we rank them according to some score (the key).
+
+### Performance
+| Operation | Unsorted Array | Sorted Array | Balanced Tree |
+|---|---|---|---|
+| Insert(Q, x) | O(1) | O(n) | O(lgn) |
+| Find-Minimum(Q) | O(1) | O(1) | O(1) |
+| Delete-Minimum(Q) | O(n) | O(1) | O(lgn) |
+
+The trick to getting `O(1)` on Find-Minimum is to store a pointer to the min. On insertion we can just update the current min pointer if it's lower. Then on deletion we just search for the new minimum. On unsorted arrays this is `O(n)` but for sorted it's `O1()` and balanced trees is `O(lgn)`.
+
+The other operations's cost is obvious.
+
+
+## 3.7 Hashing
+Hash tables are a very practical way to maintain a dictionary. It exploits the fact that with an index, lookup time in an array is constant.
+
+A hash function is a mathematical function that maps keys to integers, which are then used as the index. It's important that the hash function maps to exactly the number of indices we have in our dictionary. So to do accomplish that we must take the remainder: `hash mod size`. With a well chosen table size (should be a large prime) the resulting hash values should be fairly uniformly distributed.
+
+### Collision Resolution
+But obviously with taking the remainder, we provide the opportunity for collisions.
+
+Assume table size is `m`.
+
+**For both these methods below, each item is stored along with its key.**
+
+There are two approaches to maintaining a hash table:
+1. *Chaining*: the hash table is an array of `m` linked lists (buckets). Each `ith` element contains all the items that hash to the value of `i`. If `n` keys are uniformly distributed in a table, each list will containy roughly `n / m` elements. A considerable amount of memory is used in this method to maintain all the pointers. That memory weould be better spent on increasing the size of the table and therefore collisions.
+2. *Open addressing* maintains the hash table as a simple array of elements. The `ith` element contains the first element that was hashed to a given index. During insertion, if an item exists for a given hash, the array is sequentially probed for the next open slot. The same happens for searching. This is called *sequential probing*. There are other methods (double hashing, quadratic probing, etc). Deletion gets tricky as we have to make sure all items remain accessible. So we have to move all items of a given hash and reinsert them.
+
+Chaining and open address both cost `O(m)` to initialize an m-element hash table to null elements prior to insertion.
+
+Here are the given expected and worst-case times for chained hash table with doubly linked lists:
+
+
+| Operation | Hash table (expected) | Hash table (worst case) |
+|---|---|---|
+| Search(L, k) | O(n/m) | O(n) |
+| Insert(L, x)) | O(1) | O(1) |
+| Delete(L, x)) | O(1) | O(1) |
+| Successor(L, x)) | O(n + m) | O(n + m) |
+| Predecessor(L, x)) | O(n + m) | O(n + m) | 
+| Minimum(L)) | O(n + m) | O(n + m) | 
+| Maximum(L)) | O(n + m) | O(n + m) | 
+
+Some notes on this:
+- Deletion seems to be `O(1)` for one of two reasons not made clear in the book:
+  1. The item `x` is the item in the linked list *along with its next and prev* pointers. So deletion just involves fixes the linked list.
+  2. The amortized cost is `O(1)` if the hash function has low-collision and the table size is sufficiently sized.
+- For traversing all elements, with chaining it's `O(n + m)` as each bucket needs to be traversed. For open addressing, it's `O(m)` as we just iterate over the flat array (the number of elements must be not more than the size of the table).
+
+### Duplicate Detection via Hashing
+The key idea of hashing is to map a large obect (string, key, whatever) by a single number. Udi Manber, at one time the head of all search products at Google, said the three most important ideas in CS were "hashing, hashing, and hashing".
+
+Example applications of duplicate detection:
+1. *Is a large document unique with a large corpus?*: Searching via the context is obviously impractical. Instead we can generate a hash of the document and use that to compare with the hash codes of all other documents.
+2. *Is part of this document plagiarized?*: As a single character will change a hash code of the whole document, we can instead generate hash codes from overlapping windows (substrings) within the document. We should make the length of the substring long enough to avoid chance collisions. The biggest downside: the hashtable is large. Later in the book we'll talk about how to create a well-chosen subset of hashcodes (min-wise hashing).
+3. *How can I convince you that a file isn't change?*: We can simply use cryptographic hashing to ensure that a given file is the same at some other point in time.
+
+Although the worst-case of anything involving hashing is dismal, with a well-chosen hash function we can confidently expect good behavioour.
+
+### Canonicalization
+We can take advantage of collisions to make otherwise complex problems far quicker. For example, say we're given a string of letters and we want to find all the words that can be made from those words (a,e,k,l => kale, lake, leak). If we were to search each word in a dictionary of `n` words, then the performance of that is `O(n)`.
+
+We can instead hash each word to a sorted string of its letters. That way all words comprised of the same letters hash to the same key. That way finding all the words is simply running the hash function and then looking it up via a hash table. Now the complexity is proportional just to the number of words matching the key.
+
+We can also use it to determine the list of letters that create the most words. Simply find the key with the greatest collisions. If we were to maintain a sorted list of the hash codes, then this becomes super simple.
+
+This is generally an example of *canonicalization*: reducing complication objects to a standard (canonical) form. Another example is stemming: removing the suffixes like -ed and -s or -ing from words.
+
+### Compaction
+Sorting a large number of objects with large values is slow. E.g. sorting a library of books by their actual content. Instead of that, we can instead hash the first say 100 words of each book and sort those. Then we just need to sort the books that collide. This is called *compaction*, also called fingerprinting, whose goal is to reduce the size of the objects we're dealing with.
+
+
+## 3.8 Specialized Data Structures
+All the data structures so far represent an unstructed set of items designed for retrieval operations. There are data structures that are designed for a specific type of data:
+
+1. *String data structures*: Suffix trees/arrays are special data structures that preprocess strings to make pattern matching operations faster.
+2. *Geometric data structures*: Geo data typically consists of data points and regions. Regions in the plane are described by polygons, with a boundary of a closed chain of line segments. A polygon is described by a set of verts, with each consecutive pair of verts forming an a boundary of the polygon. Spatial data strucutures such as kd-trees organize points and regions by geometrics location to support fast search operations.
+3. *Graph data structures*: Graphs are typically representing either using adjacency matrics or lists. The choice has a big impact on the algorithms we use on them. They'll be discussed later in [Chapter 7](#Chapter 7)
+4. *Set data structures*: Typically represented using a dictionary to support fast membership queries. Alternatively, *bit vectors* are boolean arrays such that the *ith* bit is 1 if *i* is in the subset.
