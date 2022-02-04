@@ -1620,23 +1620,25 @@ We should aim to write branching logical in a way that encourages conditional da
 
 
 ## Chapter 6 The Memory Hierarchy
-The hierarchy:
-1. CPU registers store the most frequently used data
-	1. 0 cycles for access
-2. Small, fast cache memories nearby the CPU act as a staging area for a subset of data and instructions stored in main memory
-	1. 4 to 75 cycles
-3. Main memory stages data store on large, slow disks
-	1. Hundreds of cycles
-4. Large disks are often the staging area for data from other machines
-	1. Tens of millions of cycles
+Memory can be considered as a hierarchy, with the fastest and smallest at the top, and the slowest and largest at the bottom.
 
-Generally we should aim to write programs with good locality: proximity to frequently accessed data.
+The heirarchy goes:
+1. *CPU registers*: Stores the most frequently used data
+    - 0 cycles for access
+2. *Cache memories*: Small, fast cache memories nearby the CPU act as a staging area for a subset of data and instructions stored in main memory
+    - 4 to 75 cycles
+3. *Main memory*: Stages data stored on large, slow disks
+    - Hundreds of cycles
+4. *Hard disks*: Large disks are often the staging area for data from other machines
+    - Tens of millions of cycles
 
+Generally we should aim to write programs with good locality: proximity to frequently accessed data. This encourages the compiler to make use of faster memory options like CPU registers.
+ 
 ### 6.1 Storage Tech
 #### RAM
-Two types:
-1. Static RAM (SRAM)
-2. Dynamic RAM (DRAM)
+There are two types of RAM:
+1. *Static RAM* (SRAM)
+2. *Dynamic RAM* (DRAM)
 
 - SRAM is much faster and more expensive than DRAM.
 - SRAM is used for cache memories both on and off the CPU chip.
@@ -1698,12 +1700,12 @@ A *bus* is made of parallel wires that carry address, data, and control signals.
 
 Example basic system:
 - Devices:
-	- CPU
-	- I/O Bridge (contains the memory controller)
-	- Memory
+	1. CPU
+	2. I/O Bridge (contains the memory controller)
+	3. Memory
 - Buses:
-	- System bus: CPU -> I/O bridge
-	- Memory bus: I/O Bridge -> Main Memory
+	1. System bus: CPU -> I/O bridge
+	2. Memory bus: I/O Bridge -> Main Memory
 
 I/O Bridge: translates electrical signals of the system bus into the electrical signals of the memory bus. The I/O bridge also connects the system bus and memory bus to an I/O bus that's shared by I/O devices like disks and graphics cards.
 
@@ -1718,18 +1720,18 @@ Example of how an address is read to a register:
 Much bigger, but takes milliseconds to read data. 100s of K longer than DRAM, and million times longer than SRAM.
 
 ##### Disk Geometry
-Made from *platters*. Each side (surface) coated with magnetic recording material.
+Made from *platters*. Each side (surface) is coated with magnetic recording material.
 
-A rotating spindle spins at a fixed *rotational rate.*, between 5400 and 1500 RPM.
+A rotating spindle spins at a fixed *rotational rate*, between 5400 and 15000 RPM.
 
-Each surface is broken into concentric circles called *tracks*. Each track is further partitioned into *sectors*. Each sector contains an equal number of data bits (typically 512 bytes) encoded in magnetic material on the sector. Sectors are separated by gaps with no data bits. Gapes store formatting bits that identify sectors.
+Each surface is broken into concentric circles called *tracks*. Each track is further partitioned into *sectors*. Each sector contains an equal number of data bits (typically 512 bytes) encoded in magnetic material on the sector. Sectors are separated by gaps with no data bits. Gaps store formatting bits that identify sectors.
 
 A drive has one or more platters.
 
-A cylinder is the name for all tracks on all platters equidistance from the center.
+A cylinder is the name for all tracks on all platters equidistance from the center. So a cylindrical slice of the who stack of platters.
 
 ##### Disk Operation
-*read/write head* per platter connected to the end of an *actuator arm* read/writes bits. *Seeking* moves the head to a given track. The head literally flies on a thin piece of air. Sealed in an airtight package to avoid dust issues.
+Each platter has a *read/write head* that reads and writes bits that's connected to the end of an *actuator arm*. *Seeking* moves the head to a given track. The head literally flies on a thin piece of air. Sealed in an airtight package to avoid dust issues.
 
 Access time is based on:
 - **Seek time**: The time to move the head to the appropriate track. Normally 3 - 9ms. Can be as high as 20ms.
@@ -1740,7 +1742,7 @@ Access time is based on:
 The track/section stuff is complicated, so a *disk controller* exposes a simpler model based on *logical blocks*; essentially a linear array of block numbers. The controller handles mapping (via creating and storing a triplet of surface, track, sector).
 
 ##### Disk formatting
-Fills the gaps between sectors with info identifying the sector, identifying which cylinders are out of action, and setting aside backup cylinders. These backup cylinders are why marketed capacities are different to usable capacity.
+Formatting fills the gaps between sectors with info identifying the sector, identifying which cylinders are out of action, and setting aside backup cylinders. These backup cylinders are why marketed capacities are different to usable capacity.
 
 ##### Connecting I/O Devices
 I/O devices are connected to the I/O bridge via the I/O bus. The I/O bus is designed to be independent of the underlying CPU (unlike memory and system buses which are CPU specific).
@@ -1754,7 +1756,7 @@ Example I/O devices:
 The I/O bus used to be PCI (until 2010) which shared the bus wires amongst all devices. PCIe replaces that with high-speed serial, point-to-point links between switches. The I/O bus standard is defined by the main board.
 
 ##### Accessing Disks
-CPU issues commands to I/O using *memory-mapped I/O* - a block of reserved memory address space for I/O. Each address known as an *I/O port*. Each device is mapped to one or more ports when attached to the bus.
+The CPU issues commands to I/O using *memory-mapped I/O* - a block of reserved memory address space for I/O. Each address is known as an *I/O port*. Each device is mapped to one or more ports when attached to the bus.
 
 Example: requesting a read from a disk might involves writing instructions to a given port address. Instructions:
 1. Start the read along with other options like whether it should interrupt the CPU
@@ -1766,10 +1768,11 @@ Then the CPU does other stuff as it could take 16ms to finish the read (an age i
 Once finished, an interrupt signal is sent, which is a signal on an external pin on the CPU that causes the CPU to jump to an OS system routine, before going back to what it was doing.
 
 #### SSDs
-- Plugs into the I/O bus like any other disk (via USB or SATA typically).
-- Also has logical disk blocks.
-- Flash memory chips rather than platters.
-- Disk controller is known as *flash translation layer*.
+SSDs plug into the I/O bus like any other disk (via USB or SATA typically). They also use logical disk blocks.
+
+Instead of platters, SSDs use flash memory chips.
+
+The disk controller is known as *flash translation layer*.
 
 ##### Geometry
 A chip consists of a sequence of blocks. Within each block a series of pages. Typical pages are 512 bytes to 4KB. A block consists of 32 - 128 pages.
@@ -1787,12 +1790,12 @@ It's much easier to increase density (thereby reduce cost) than to decrease acce
 Good locality: the practice of referencing data items that are near other recently referenced data items or that were recently referenced themselves. Known as the *principle of locality*.
 
 Two types for good programs:
-1. *temporal locality*: a memory location referenced once is likely to be reference again multiple times in the near future
-2. *spatial locality*: if a memory location is referenced once, its likely the program is likely to reference nearby memory locations in the near future.
+1. *temporal locality*: a memory location referenced once is likely to be referenced again multiple times in the near future.
+2. *spatial locality*: if a memory location is referenced once, its likely the program is going to reference nearby memory locations in the near future.
 
 Generally: *programs with good locality run faster than programs with poor locality*.
 
-The principle is used all across computers systems, from hardware to software. In hardware, recent main memory data is cached in small *cache memories* near the CPU. OS might use main memory to cache recently referenced chunks of the virtual address space or recently used blocks of disk. Web browsers exploit temporal locality by caching recently used documents on a local disk. Servers use edge caching.
+The principle is used all across computers systems, from hardware to software. In hardware, recent main memory data is cached in small *cache memories* near the CPU. The OS might use main memory to cache recently referenced chunks of the virtual address space or recently used blocks of disk. Web browsers exploit temporal locality by caching recently used documents on a local disk. Servers use edge caching.
 
 Accessing a vector can be described using *sequential reference patterns*. *stride-1 reference pattern* means each element is accessed sequentially. *stride-K* is every Kth element. They are an example of good spatial locality, but poor temporal locality. As the stride (k) increases, spatial locality decreases. *stride-1* is obviously want we want to aim for.
 
@@ -1814,10 +1817,10 @@ As storage tech follows the principle of more capacity = slower access + good so
 #### Cache
 Generally, *cache* is a small fast storage device that acts as a staging area for data objects stored at a lower level.
 
-Between each level, a subset if blocks from the lower level can be cached at the higher level. Transfers between adjacent levels must have the same block size. But they can and are different between other levels.  Generally block sizes increase lower down the hierarchy to amortize the slower access times.
+Between each level, a subset of blocks from the lower level can be cached at the higher level. Transfers between adjacent levels must have the same block size. But they can and are different between other levels.  Generally block sizes increase lower down the hierarchy to amortize the slower access times.
 
 **Cache hit**: when a given block that exists in k+1 exists at k (the higher level).
-**Cache miss**: when a given block does not exist at K + 1 and must be retrieved from K and then written to K, possibly evicting another cached item (the *victim block*). Which block to replace when writing a new cached item is the *replacement policy*. *random replacement policy* randomly chooses. *LRU* is most recently used.
+**Cache miss**: when a given block does not exist at K + 1 and must be retrieved from K and then written to K + 1, possibly evicting another cached item (the *victim block*). Which block to replace when writing a new cached item is the *replacement policy*. *random replacement policy* randomly chooses. *LRU* is most recently used.
 
 *Cold cache*: when the cache is empty. It hasn't been *warmed up*.
 
@@ -1875,7 +1878,7 @@ General good practice:
 1. **Make the common case go fast**
 2. **Minimize the number of cache misses in each inner loop**
 
-Generally for an array of word-sized elements, miss per iteration of the array is: `min(1, (word size x k/B))` where B is the block size in bytes and k is the stride of the iteration. So say words are 4 bytes and the cache blocks are 4 words, and due the array being always mapped to the same line (because it uses the array's address for the index and tag bits), and the cache is initially empty, then even 4th `i` will miss, as it will cache 4 words at a time, then miss, and recache the next block of 4 words.
+Generally for an array of word-sized elements, miss per iteration of the array is: `min(1, (word size x k/B))` where B is the block size in bytes and k is the stride of the iteration. So say words are 4 bytes and the cache blocks are 4 words, and due to the array being always mapped to the same line (because it uses the array's address for the index and tag bits), and the cache is initially empty, then even 4th `i` will miss, as it will cache 4 words at a time, then miss, and recache the next block of 4 words.
 
 Generally:
 - Repeated references to local variables are good because the compiler can cache in the register file (temporal locality)
