@@ -1035,3 +1035,415 @@ So far we've spoken only about the upper bounds of sorting algorithms, which are
 Well sorting `n` elements requires at least looking at them all so our lower bound has to be `Ω(n)`. What about the upper bound? Well it order for sorting to actually do it's job each inspect of `n` needs to be at least a comparison with something else, as if we did exactly the same operation for each of `n`, we couldn't possibly be doing anything useful.
 
 We can think of all possible executions of pairs of `n` but considering a tree with `n!` leaves, where each leaf represents a unique permutation. The minimum height of this tree represents the faster algorithm and it turns out it's `lg(n!) = θ(nlogn)`.
+
+# Chapter 5 - Divide and Conquer
+One of the most powerful techniques in solving problems is breaking them down into smaller, more easily solved pieces. Smaller problems == less overwhelming. Recursive algorithms become more apparent when we can break a problem down into smaller problems of the same type.
+
+*Divide and conquer* splits a problem into (say) halves, solves each half, then stiches the pieces back together to form a full solution.
+
+Whenever merging the smaller parts of a bigger problem is more efficient than solving the big problem, we get an efficient algorithm.
+
+Examples of divide and conquer: mergesort, the Fourier transform, Strassen's matrix multiplication algorithm.
+
+## 5.1 Binary Search and Related Algorithms
+Binary search is the key divide-and-conquer algorith. It's a fast algorithm for searching in a sorted array of keys `S`. To search for `q` we compare it to the middle key `S[n/2]`. If `q < S[n/2]` then its in the left-side of the array, otherwise it's the right. We repeat this process on each subset. It means we find the right answer in a total of `lg(n)` comparisons - much better than n/2 expected if we did sequential search.
+
+```c
+int binary_search(item_type s[], item_type key, int low, int high) {
+  int middle; /* index of middle element */
+
+  if (low > high) {
+    return (-1); /* key not found */
+  }
+
+  middle = (low + high) / 2;
+
+  if (s[middle] == key) {
+    return (middle);
+  }
+
+  if (s[middle] > key) {
+    return (binary_search(s, key, low, middle - 1));
+  } else {
+    return (binary_search(s, key, middle + 1, high));
+  }
+}
+```
+
+### Using Binary Search to Count Occurences
+As binary search allows us to find a key quickly, naturally we can use it to count occurences of a given key within a sorted array. The simple method would be to find the key, then seqentially scan left and right to find the boundaries. However this leads to `O(ln + s)` where `s` is the length of occurences.
+
+Instead we can modify the original binary search so that instead of returning the index when the key is found `s[middle] == key`, we instead let it run. It'll then keep moving right until it finds the right boundary. We can reverse the condition (`s[middle] > key`) to find the left boundary. This will be `O(lgn)`.
+
+Another solution: search of the keys `k - e` & `k + e` where `e` is some small constant such that it resolves to a key that is the prev/next key in the sorted list. That way we know that finding this key represents the boundary. Presumably this fails if there happens to not be an instance of that key in the array.
+
+### One-Sided Binary Search
+Say we have a run of 0s then an unbounded run of 1s and we want to find the transition point `p`. If we had a bound on the array size, then we could use binary search as above.
+
+Without a bound, we can instead repeatedly test at larger intervals (`A[1]`, `[2]`, `A[4]`) until we find a non-zero value. Now we have a window in which to perform binary search. It will find the transition point `p` in max `2[lgp]` regardless of array length.
+
+### Square and Other Roots
+We can use binary search to find the square root of a number.
+
+For any number `n` > 1, the root is `>= 1` and `<= n`. So `1` and `n` are our bounds for binary search. If the swuare of the midpoint `m` is great that `n`, then we continue in the left-half, otherwise we countinue in the right-half. It will find it in `lgn` rounds to within +-1/2.
+
+The same can be done for finding roots of a polynomial equation.
+
+This is called the *bisection method* in numerical analysis. There are faster methods, but this shows the utility of binary search.
+
+## 5.3 Recurrence Relations
+A recurrence relation is an equation in which a function is defined in terms of itself. E.g:
+1. Fibonacci
+2. Any polynomial
+3. Any exponential
+
+The self-reference property of recurrence relations is shared with recursive programs or algorithms. Essentially: recurrence relations provide a way to analyze recursive structures, such as algorithms.
+
+### Divide-and-Conquer Recurrences
+A given divide-and-conquer algorithm breaks a problems into `a` smaller pieces, each of which is size `n/b`. It then spends `f(n)` time combining these subproblems into a complete result. The worst-case, `T(n)`, is given by:
+
+```
+T(n) = a · T(n/b) + f(n)
+```
+
+Essentially: (the number of subproblems * the time to solve the subproblem) + the time to combine.
+
+Let's look at how this applies to other algorithms:
+
+1. *Mergesort*: `T(n) = 2T(n/2) + O(n)`, as the algorithm divides the problem into two smaller pieces and spends linear time merging. We know this evaluates to `O(nlgn)`.
+2. *Binary search*: `T(n) = T(n/2) + O(1)`. `a` is 1 because no merging happens, we just throw away a half. It's n/2 as we have the problem each step. And `O(1)` combining as there is no combining. We know this evaluates to `O(lgn)`.
+3. *Fast heap construction*: THe *bubble_down* method of heap construction builds an n-element heap by constructing two n/2 element heaps and then merging them with the root in log time. So `T(n) = 2T(n/2) + O(lgn)`. This evaluates to `O(n)`.
+
+## 5.4 Solving Divide-and-Conquer Recurrences
+There are three distinct cases of the solution to divide-and-conquer recurrences. There all variations of the so-called *master theorem*:
+
+1. If `f(n) = O(n^(logb a−ε))` for some constant `ε > 0`, then `T(n) = Θ(n^(logb a))`.
+2. If `f(n) = Θ(n^(logb a))`, then `T(n) = Θ(n^(logb a) lgn)`.
+3. If `f(n) = Ω(n^(logb a+ε))` for some constant `ε > 0`, and if `af(n/b) ≤ cf(n)` for some `c < 1`, then `T(n) = Θ(f(n))`.
+
+This looks scary but it's fairly simple. It's essentially describing the dominant cost for a given variant of a recurrence. Case 1 generally holds for heap construction and matrix multiplication. Case 2 holds for mergesort. Case 3 generally arises with clumsier algorithms, where the cost of combining the subproblems domaintes everything.
+
+Generally we can think of the master theorem as a black-box that we can invoke as needed. It can be understood by looking at the recursion tree associated with a typical `T(n) = aT(n/b) + f(n)` divide-and-conquer algorithm:
+
+```
+                                                                         ▲
+                                                                         │
+parition size = n                     /x              vertex degree = a  │
+                                   / /   \                               │
+                                 /        \                              │
+                               /            \                            │
+                             /                \                          │
+                            /                   \                        │
+     n/b                   x           x          \x                     │
+                          /│\         /│\         /│\                    │
+                           │           │           │                     │
+                         / │ \       / │ \       / │ \                   │
+                           │           │           │                     │
+                        /  │  \     /  │  \     / /│  \                  │
+     n/b^2              x  x  x     x  x  x     x  x  x                  │
+                                                                         │   height = log_b(n)
+                                                                         │
+                                                                         │
+                                                                         │
+                                                                         │
+                                                                         │
+                                                                         │
+                                                                         │
+                                                                         │
+     b         x           x           x                  x              │
+              /│\         /│\         /│\                /│\             │
+               │           │           │                  │              │
+             / │ \       / │ \       / │ \     ....     / │ \            │
+               │           │           │                  │              │
+            /  │  \     /  │  \     /  │  \            /  │  \           │
+     1      x  x  x     x  x  x     x  x  x            x  x  x           │
+                                                                         │
+                                                                         ▼
+
+         ◄───────────────────────────────────────────────────────►
+
+        width (number of leaf nodes) = a^(log_b(n)) = n^(log_b(a))
+```
+
+1. *Case 1: Too many leaves*: If the number of leaves outweights the overall internal evaluation cost (the cost of evaluating a subproblem), the total running time is `O(n^(log_b(a)))`.
+2. *Case 2: Equal work per level*: If the sum of the internal evaluation cost at each level is equal (as we move down the tree there are more problems to solve), then the total cost is simply cost per level (`n^(log_b(a))`) times the number of  levels (`log_b(n)`): `O(n^(log_b(a)) lgn)`.
+3. *Case 3: Too expensive a root*: If the internal cost grows rapidly with `n`, then the cost of the root evaluation may dominate everything: `O(f(n))`.
+
+## 5.5 Fast Multiplication
+There are two ways we're taught how to do multiplication:
+1. Add A lots of B: `O(n · 10ⁿ)` to multiple two n-digit base-10 numbers
+2. Digit by digit: So 121 * 541 = 121 * 1 + 121 * 40 + 121 * 500 = 65,461. Assuming we perform each real digit-bydigit product (knowing that 121 * 40 is really just 121 * 4 with some digits moved to the correct place) by looking it up in a times table, this algorith multiplies two n-digit numbers in `O(n²)`.
+
+But wait for it, there's an even faster method using divide-and-conquer. Suppose that each number has `n = 2m` digits. Well we can split `2m` and work on them independently. Asusume `w = 10ᵐ⁺¹` (essentially padding with zeroes) and represent `A = a₀ + a₁w` and `B = b₀ + b₁w`, where `aᵢ` and `bᵢ` are the pieces of each respective nummber, then:
+
+```
+A × B = (a0 + a1w) × (b0 + b1w) = a0b0 + a0b1w + a1b0w + a1b1w2
+```
+
+This procedure reduces the problem of multiplying two n-digit numbers to four products of (n/2)-digit numbers. We also have to add together these four products, which requires `O(n)` work.
+
+We can assertain the time for this algorithm by describing it given its recurrence:
+
+```
+T(n) = 4T(n/2) + O(n)
+```
+
+Using master theorem (case 1), we see the algorithm runs in `O(n²)`. But this is the same as the digit-by-digit method. We divided it but did not conquer.
+
+There's a better algorithm that describes the product of A * B such that there are 3 multiplications and a constant number of additions (I'm not writing it here, feels overboard). It reduces the recurrence to:
+
+```
+T(n) = 3T(n/2) + O(n)
+```
+Since `n = O(n^(log_2(3)))`, we have the first case of the master theorem., so `T(n) = Θ(n^(log_2(3))) = Θ(n^1.585)`. Much better than `O(n²)` for large numbers.
+
+The notion of defining a recurrence that uses less multiplications and more additions is also behind faster matrix multiplication. Normally matrix multiplication takes `O(n³)`, but Strassen discovered a divide-and-conquer algorithm that has a recurrence:
+
+```
+T(n) = 7 · T(n/2) + O(n²)
+```
+Because `log₂7 ~= 2.81`, `O(^log₂7)` dominates `O(n²)`, so case 1 applies and `T(n) = Θ(n².⁸¹)`. This algorithm has been increasing improved with increasingly complicated recurrences so now its n^2.3727.
+
+## 5.6 Largest Subrange and Closest Pair
+Let's think about an algorithm to find the largest subrange within an array that sums to the largest number (assuming the array contains negative numbers). It provides an index pair such that the sum from index `i` to `j` is the largest within the array. The niave approach has `O(n²)`.
+
+Divide-and-conquer can give us `O(nlogn)`. The book has a bad description, or I just don't understand, so I won't make notes. Basically it divides it, gets the best range on each side and then sees if they cross the middle, if they do the union is the largest. 
+
+But generally the idea of "find the best on each side, then check what is straddling the middle" can be applied to other problems. For example, finding the smallest distance between pairs among a set of `n` points. The closest pair is defined by two points in the left half of points, or the right half, or the pair in the middle, so this algorithm must find it (assuming a sorted array of numbers):
+
+```
+
+ClosestPair(A, l, r)
+  mid = ⌊(l + r)/2⌋
+  lmin = ClosestPair(A,l,mid)
+  rmin = ClosestPair(A,mid+1,r)
+  return min(lmin, rmin, A[m + 1] − A[m])
+
+```
+This doesn't have a termination condition?? I don't get it.
+
+But apparently: this does contant work per call, so it's recurrence is: `T(n) = 2 · T(n/2) + O(1)`, which is case 1 of the theorem, so `T(n) = Θ(n)`. This can be extended to two dimensions to get `Θ(n log n)`.
+
+## 5.7 Parallel Algorithms
+Divide-and-conquer is ideal for parallelization. If we can partition our problems into `p` equal-sized parts, then `O(n)` necomes `O(n/p)` plus whatever it costs to combine the results.
+
+But this is only possible if the data is independent. So *data parallelism* is key.
+
+Tasks that can easily be broken into independent chunks that can be handled in parallel is known as *embarrassingly parallel*.
+
+Generally such data parallel approaches are not algorithmically interesting, but they are simple and effective.
+
+### Parallel Pitfalls
+1. *There's often a small upper bound on the potential win*: If have a lot of machines, say 24, that gives you a potential 24x speedup. Sounds great, but often more work spent on the algorithm itself can yield a far higher improvement.
+2. *Speedup means nothing*: Speedup as a measure can often mean nothing, because throwing more machines at the problem doesn't mean you have a good algorithm. For example, there's a brute-force chess algorithm that's embarassingly parallel, but there's a better algorithm that reduces 99.99% of the work.
+3. *Parallel algorithms are tough to debug*: For obvious reasons. Especially the combining of results at potentially random times.
+
+Generally: parallel is only useful after you're stuck at improving the algorithm itself.
+
+## 5.9 Convolution 
+**NOTE: more work is needed for me to understand this, possibly implementing some of these algorithms.**
+
+A convolution `C[k]` of two vectors `A, B` is defined as the sum of `A[j] · B[k - j]` from `j=0 -> m-1`, where `m`, `n` are the length of `A` and `B`, respectively.
+
+Essentially convolution is the dot product of A over shifts of `B`. The shift can be either backwards or forwards (above is backwards). It describes how A is affected by B.
+
+It sounds like convolution is a more general term that's described in terms of functions, but here is specifically referencing vectors. Here's a good description I found online:
+
+> The convolution of two vectors, u and v, represents the area of overlap under the points as v slides across u. Algebraically, convolution is the same operation as multiplying polynomials whose coefficients are the elements of u and v.
+
+
+Convolutions can be used to handle *polynomial multiplication*. Essentially polynomial multiplication works out by summing various products from the two polynomials (I remember this from score). The coefficients of each term within the resulting product is given by the convolution.
+
+So implementing convolutions is important for us to do.
+
+Convolution multiplies every possible pair of elements of A and B, so we'd expect quadratic. But it turns out there's a divide-and-conquer method to get `O(nlogn)` assuming `n >= m`). 
+
+
+### Applications
+`n²` -> `nlogn` is a huge win. So it's important to recognize when we're dealing with a convolution. They often arise when trying all possible ways of doing things that up to `k`, for a large range of values of `k`, or when sliding a mask or pattern `A` over a sequence `B` and calculating each position.
+
+1. *Integer multiplication*: Any integer can be considered a polynomial in base `b`. E.g 632 = 6·b² + 3 · b¹ + 2 · b⁰, where b = 10. So integer multiplication acts like integer multiplication without the carry. Using fast convultions allows multiplication even faster than that clever algorithm mentioned before. There are two ways to deal with the carry, but both easy. But anyway: `O(nlogn)`.
+2. *Cross-correlation*: For two times series A and B, the cross-correlation function measures the similarity as a funtion of the shift or displacement of one relative to the other. So we could look at sales and advertising expenditures to find correlation. It's defined as convolution of A over forward-shifted B.
+3. *Moving average filters*: Often we want to smooth out a window within a time series by averaging over the window. E.g. C[i−1] = 0.25B[i−1]+ 0.5B[i]+0.25B[i+1] over all positions i. This is just another convolution. Where A is the vector of weights within the window around B[i].
+4. *String matching*: The algorithm given before is `O(nm)`. But as the string matching works by moving a subset window over the larger string, we can think of this as convolution. Specifically we can define each character within the string as a bit vector of its alphabet (so in the alphabet {A,B}, A = `10` and B = `01`). Combining these bit vectors gives us a bit vector of the string and the pattern. The dot product over a window will indicate whether the substring matches at a given position.
+
+
+### Fast Polynomial Multiplication
+It's complicated. Not making notes. Just know that fast convolution can be done via divide-and-conquer.
+
+# Chapter 6 - Hashing and Randomized Algorithms
+The algorithms discussed so far have all optimized the worst-case: guarantees that every problem instance runs within a given time.
+
+But we can't always do that, so instead we can design algorithms that don't guarantee always efficient or always correct. These lead to randomized algorithms that can still have performance guarantees, but where performance issues are due to getting unlucky on coin flips rather than adverserial input data.
+
+There are two types of randomized algorithms that differ in their guarantees (efficient or correct):
+
+1. *Las Vegas Algorithms*: Guarantee correctness, and are usually (but not always) efficient. Quicksort is a good example.
+2. *Monte Carlo Algorithms*: Provably efficient, and usually (but not always) correct. Examples include random sampling methods where a best solution is found by samplying (say) 1,000,000 samples.
+
+Avoiding the need for caring about all edge cases makes randomized algorithms usually simple to describe and implement. But they also can be difficult to analyze due to their unpredictable nature. We therefore need to reach for probablity theory to analyze them.
+
+## 6.1 Probability Review
+Probability theory provides a formal frameowkr for reasoning about the likelihood of events.
+
+Definitions:
+1. *Experiment*: A procedure that yields one of a set of possible outcomes.
+2. *Sample space S*: The set of possible outcomes.
+3. *Event E*: A specified subset of outcomes of an experiment. So rolling 7 on a dice has multiple outcomes that would result in 7 (4 + 1, 6 + 1, etc).
+4. *Probability of an outcome s*: Denoted *p(s)*, it's a number with two properties:
+  1. For each outcome *s* in sample space *S*, `0 <= p(s) <= 1`.
+  2. The sum of probabilities of all outcomes equals one.
+5. *Probability of an event E*: Sum of the probabilities of the outcomes of the event. An alternative is to use the *complement* of the event E' - the case where E does not occur. Often easier to analyze the complement.
+6. *Random variable V*: A numerical function on the outcomes for a probability space. E.g. the function "sum the values of two dices" produces an integer between 2 and 12. This implies a probability distribution of the possible values of the random variable -> P(V(s) = 7) = 1/6,  P(V(s) = 12) = 1/36.
+7. *Expected value of a variable E(V)*": The sum of the probabilities within the sample space implied by the variable V.
+
+### Compound events and independence
+Here are a list of set operations considering two events A and B:
+
+1. *Difference*: Outcomes of A that are not outcomes of B: `B - A`
+2. *Intersection*: Outcomes common to A and B: `A ∩ B = A − (S − B)`
+3. *Union*: Outcomes appearing in either A or B: `P(A ∪ B) = P (A) + P (B) − P (A ∩ B)`
+4. *Independence*: Events A and B are independent (no special structure of outcomes shared between events) if: `P (A ∩ B) = P (A) × P (B)`
+
+On independence: if we had a class of 50% female / make and half of the students were above average, we'd expect the number of above average females to be 25%. Independence makes calculations much easier. Randomized algorithms often are designed around independent samples, so we can safely multiply probabilities (which we do when they're independent) to understand compound events.
+
+**Question for Ben to answer later:** why do unions substract the probability of the A and B outcome?
+- Answer: if we didn't subtract, then we'd be counting the outcomes that are present in both A and B twice. So we need to subtract `A ∩ B` to remove that duplicate count.
+
+### Conditional Probability
+Assuming, `P(B) > 0`, the *conditional probability* of A given B, is:
+
+```
+P(A|B) = P(A ∩ B) / P(B)
+```
+
+If A and B are independent, then:
+
+```
+P(A|B) = P(A ∩ B) / P(B) = P(A)P(B) / P(B) = P(A)
+```
+
+So B has no impact. P(A|B) is just P(A) if B is irrelevant.
+
+Our primary tool for compute conditional probabilities is *Bayes' theorem*, which reverses the direction of dependencies:
+
+```
+P(B|A) = P(A|B)P(B) / P(A)
+```
+
+It can often be easier to calculate the reverse.
+
+### Probability Distributions
+Random variables are numerical functions where the values are associated with probabilities of occurrence. Such random variables can be represented by their *probability density function* (pdf).
+
+This is simply a graph who's x-axis represents the values the random variable can take on, and the y-axis is the probabalities of each value.
+
+### Mean and Variance
+There are two main types of summary statistics:
+
+1. *Central tendency measures*: Captures the center around which the random samples or data points are distributed.
+2. *Variation or variability measures*: Describes the spread - how far the random samples or data points can lie from the center.
+
+The primary centrality measure is the *mean*. The mean of a random variable, E(V), also known as the expected value, is given by the sum of the probabilities within the sample space implied by the variable V.
+
+When all the elementary events are of equal probablity, the mean is computed as the sum of all elements over the number of elements. Basic stuff.
+
+*Standard deviation*: The most common measure of variability. The standard deviation of a random variable V is given by `σ = sqrt(E((V − E(V ))²)`.
+
+The standard deviation for a data set is computed from the sum of squared differences between the individual elements and the mean:
+
+```
+σ = √((∑ⁿᵢ₌₁(xᵢ − X')²) / (n - 1))
+```
+
+A related stastic, the *variance*: `V = σ²`, is the square of the standard deviation. They measure exactly the same thing, it's just the variance is easier to say.
+
+### Tossing Coins and Intuition
+It's obvious that that the probability of heads for n = 10,000 is 5,000. The distribution for heads `h` out of `n` is given by a binomial distribution: can't write it here. Essentially a binomial distribution is the distribution of probablities that some parameter `p` happens for `n` independent experiements. But know it's a bell shaped symmetrical distribution about the mean when `p` is 1/2. 
+
+What I may not know: just how tight the variance around the mean is for a 50% probability. Although it can be 0 to `n`, it's almost always within a few standard deviations of the mean. For a 50%, `σ = Θ(√n)`.
+
+Generally for any probability distribution, at least `1 - (1/k²)` of the mass of distribution lies within `±kσ` of the mean.
+
+Remember: for something like quicksort it may seem likely that some number of runs will produce bad results, but in reality, like winnin the lottery is unlikely, it's very likely quicksort will run how we want.
+
+## 6.2 Understanding Balls and Bins
+This one is tricky to understand. Let's try.
+
+So balls and bins is a classic problem in probability theory. Given x identical balls to toss at random into y labelled bins. How many bins are expected to contain a given number of balls. The distribution is what we're interested in.
+
+This is similar to hashing: we're hashing the balls into bins or keys into buckets. A good hash function should behave like a random number generator. So suppose we hash `n` keys into `n` buckets, then we'd expect a key per bucket.
+
+But what happens when we pull `n` integers from a uniform distribution? Again we'd want 1 key per bucket, but this isn't what happens.
+
+Instead, when running the simulation, we see 36.78% of the buckets are empty. Why?
+
+Well let's look at the probability of the first bucket always being empty. It'll be empty if the all keys `n` get assigned to the other `n - 1` buckets. The probability `p` of missing for each particular key is then `p = (n - 1)/n`, which approaches `1` as `n` gets large. Intuition: as the number of buckets increases its increasingly likely that it'll miss the first bucket.
+
+But for the first bucket to miss, we must miss for all `n` keys, the probability of which is `pⁿ`, meaning the probability of missing one ball multiplied by itself `n` times. Makes sense.
+
+What's the probability of this:
+
+```
+P(missing the first bucket) = ((n - 1) / n)ⁿ -> 1 / e = 0.367879
+```
+So as `n` gets larger, the probability tends to 1/e = 0.367..
+
+Wow this is so weird. But I guess it's just how probabilities play out as `n` gets large.
+
+### The Coupon Collector's Problem
+What's the expected time to fill all the buckets with at least one key?
+
+For a given probability `p`, the number of repeated attempts required before we expect the given outcome is `1/p`.
+
+After filling `i` buckets, the probability that our next key placement will hit an empty bucket is `p = (n - i) / n`. This gives the run `rᵢ`: the number of attempts before we hit an empty bucket.
+
+So the the number of required attempts to fill all buckets is given by the sum of the number of expected attempts per bucket:
+
+```
+E(n) = sum(n / (n - i)) from i=0 -> n - 1
+```
+
+This simplifies to `nH_n` where `Hn` is harmonic number: `∑ⁿᵢ₌₁1/i` which is also `ln(n)`.
+
+So simply the expected attempts to fill the buckets with at least 1 key is: `ln(n)`.
+
+## 6.3 Why is Hashing a Randomized Algorithm?
+A hash function should map keys `s` to integers in the range `m - 1` uniformly. As good hash functions scatter keys around the integer range in a similar manner to a uniform random number generator, we can analyze hashing by treating the values as drawn from tosses of an `m`-sided die.
+
+Even though we can analyze hashing in terms of probabilities doesn't make it a randomized algorithm. In fact a hashing algorithm has to be deterministic for a given key.
+
+For any given hashing algorithm it's possible to construct a worst-case example. To avoid this we need to randomize the algorithms we use to do the actual hashing.
+
+How? Typically `h(x) = f(x)(mod m)` where `f(x)` turns the key into a large value and taking the remainder keeps it in a given range. The range is typically governed by resource constrains so it can't be random. Instead we can mod the value of `f(x)` by some value smaller than `f(x)` but larger than `m`.
+
+I don't totally get how this is randomly choosing an algorithm. It feels more like a salt. Perhaps it's talking about the principle of using multiple mods to take a value through multiple stages of hashing.
+
+
+## 6.4 Bloom Filters
+Let's imagine building a web crawling index. Using a hash table makes sense as hashing to an empty bucket means it must be new. But two keys hashing to the same value doesn't mean they're the same necessarily, so we must check. That requires the chained hash table we've seen before that uses a linked list. But in the case of a web index, collisions are the worst thing, so let's just use a single bit vector. 0 = new, 1 = seen.
+
+But how do we avoid conflicts? Even if a table is 5% full there's still now a 5% chance of a collision, which is much too high.
+
+A better solution: a *bloom filter*. It's also just a bit-vector hash table. Instead of a document hashing to a single position, we instead hash each document `k` times using `k` different algorithns. Then when we insert the document we set each of the bits corresponding to each hash function. To test whether the doc is present, we hash with each function and then check the corresponding bits. They all must be set for a collision to have occured.
+
+The likelihood of this happening is interesting. For a `n` bit vector with `m` documents, the probability of a single collusion is `km / n` where `k` is the hashing number. But for a collision for all `k`, it becomes `(km/n)ᵏ`.
+
+This is interesting as a probability raised to a power becomes smaller, but the probability itself here is increasing.
+
+The result of that is there's a sweet spot for a given `k` and a given load `m/n` (how full the hash table is). So for a given load it would counter productive to increase `k` beyond a certain amount.
+
+## 6.5 The Birthday Paradox and Perfect Hashing
+We know that the worst-case for a hash function is `Θ(n)`. But we pay this price because we don't know the data that will be given to us. What if we did? Can we guarantee no collisions?
+
+The first attempt might look to see how big of a hash table we'd need to makeit effectively impossible to create a collision. This is similar to the birthday paradox. The math is simple, but just know that it basically comes down to `n²`. So for `n` items we need `n²` space. Not great.
+
+What if we used this idea of multiple hash functions?
+
+Well that's what *perfect hashing* is: using multiple hash functions and a multi-level table to ensure that a given key within `m` keys hashes to a unique place within a `m` sized table with some fixed length second table. 
+
+The second table is just another linear table that is big enough to fit all the collision lists (list of items that hashed the same index in the first table). The second table is built by first hashing the value, then picking a second hash function such that each of the values that collided map to a unique place in the 2nd table. We then store the hash function used and the start and stop points.
+
+To lookup a value then is simple: hash the value, find the element in the first table, this gives us the hash function and the start and stop positions. We then hash the value again using the second hash function and the star and stop values to create a `mod` function.
+
+Perfect hashing is great any time we want to make a large number of queries to a static dictionary. There's a lot of fiddling we can do to this general scheme to minimize space required. *minimum perfect hashing* guarantees `O(1)` and zero empty slots.
