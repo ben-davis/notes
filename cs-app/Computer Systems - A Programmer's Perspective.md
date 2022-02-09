@@ -1912,37 +1912,37 @@ A very good summary that I copied directly from the book:
 > Programmers can dramatically improve the running times of their programs by writing programs with good spatial and temporal locality. Exploiting SRAM-based cache memories is especially important. Programs that fetch data primarily from cache memories can run much faster than programs that fetch data primarily from memory.
 
 ## Chapter 7 Linking
-The process of combining multiple source files into a single executable that can be loaded (copied) into memory. Can happen at compile time, load time, or dynamically at run time.
+Linking is the process of combining multiple source files into a single executable that can be loaded (copied) into memory. This can happen at compile time, load time, or dynamically at run time.
 
 ## 7.1 Compiler Drivers
-Compiler driver: invokes the language preprocessor, compiler, assembler, and linker. E.g. `gcc ...`.
+A compiler driver is a program that invokes the language preprocessor, compiler, assembler, and linker. E.g. `gcc ...`.
 
-Process to compile two `c` files (`main.c`, `sum.c`) by running `gcc ...`:
+The process to compile two `c` files (`main.c`, `sum.c`) by running `gcc ...` is:
 1. For each file:
-	1. `cpp ..`: the preprocessor, converts the C into an ASCI intermediate file.
-	2. `ccl`: the C compiler, converts the intermediate into an ASCII assembly file.
-	3. `as`: the assembler, translates the assembly into a binary *relocatable object file*.
+    1. `cpp ..`: the preprocessor, converts the C into an ASCI intermediate file.
+    2. `ccl`: the C compiler, converts the intermediate into an ASCII assembly file.
+    3. `as`: the assembler, translates the assembly into a binary a *relocatable object file*.
 2. `ld`: the linker, combines the object files with an necessary system object files, to create a binary *executable object file*.
 3. `./prog`: runs the program via the OS' *loader*, which copies the code and data in the executable into memory and then transfers control to the beginning of the program.
 
 ## 7.2 Static Linking
-Takes a collection of relocatable object files and generate a fully linked executable object file.
+Static linking takes a collection of relocatable object files and generates a fully linked self-contained executable object file.
 
 Each relocatable object file contains various code and data sections, where each section is a contiguous sequence of bytes. Sections include: instructions, initialized global variables, and uninitialized variables.
 
-Linker performs two tasks:
-1. **Symbol resolution**: Object files define and reference *symbols* -> each symbol = function, a global variable, or a static variable (i.e. C variable declared with `static`). Symbol resolution associates each symbol *reference* with exactly one *definition*.
-2. **Relocation**: Assembly generates code and data sections that start at address 0. *Relocation* relocates these sections by associating each symbol definition with an actual memory location and then updates all references to the symbol with that location. Does so blindly according to *relocation entries*.
+The linker performs two tasks:
+1. **Symbol resolution**: Object files define and reference *symbols*. Each symbol is either a function, a global variable, or a static variable (i.e. C variable declared with `static`). Symbol resolution associates each symbol *reference* with exactly one *definition*.
+2. **Relocation**: Assembly generates code and data sections that start at address 0. *Relocation* relocates these sections by associating each symbol definition with an actual memory location and then updates all references to the symbol with that location. It does so blindly according to *relocation entries*.
 
-Linking essentially just concatenates the various blocks of bytes inside object files and decides on the runtime memory locations of those sections.
+Linking essentially just concatenates the various blocks of bytes inside object files and decides on the runtime memory locations of those sections. Note: these are still relative to a fixed start address. Virtual memory (discussed later) is responsible for mapping these locations to actual physical memory addresses.
 
 ## 7.3 Object files
-Three types of object files:
+There are three types of object files:
 1. **Relocatable object files**: Contains binary code and data in a form that can be combined with other relocatable object files at compile time to create an executable object file.
 2. **Executable object file**: Contains binary code and data in a form that can be copied directly into memory and executed.
 3. **Shared object file**: Special type of relocatable object file that can be loaded into memory and linked dynamically, either at load time or run time.
 
-There are different *object file format* that differ per system, but they all share similar concepts.
+There are different *object file formats* that differ per system, but they all share similar concepts.
 
 ## 7.4 Relocatable Object Files
 Object files begin with a header that indicates:
@@ -1971,7 +1971,7 @@ Three types of symbols (for a given module `m`):
 2. Global symbols referenced in the modules but defined elsewhere (nonstatic). Called *externals* .
 3. Local symbols are defined and referenced exclusively by the module (static). Doesn't include local variables, just functions and global variables defined with `static`.
 
-Local vars defined with `static` are no managed on the stack. Instead the compiler allocates space in `.data` or `.bss` for each definition and creates a local linker symbol in the symbol table with a unique name.
+Local vars defined with `static` are not managed on the stack. Instead the compiler allocates space in `.data` or `.bss` for each definition and creates a local linker symbol in the symbol table with a unique name.
 
 Symbol tables contain an array of structs that define things like the byte offset into the string table for the name, the symbol's address (either relative to the file if relocatable or an actual address for executable), the size of the object, the type (either data or function), etc.
 
@@ -2046,7 +2046,7 @@ Run time loading is done by the application via a system-provided dynamic linker
 ## 7.12 Position-Independent Code (PIC)
 In order for multiple processes to reuse the same shared library code, it needs to be compiled in a way that means it can be loaded without any relocations. This is known as *position-independent code (PIC)*.
 
-References with an app to symbols defined internally are position-independent too, as they are PC-relative. It's references to the external shared libraries that need special treatment.
+References within an app to symbols defined internally are position-independent too, as they are PC-relative. It's references to the external shared libraries that need special treatment.
 
 There are multiple techniques for apps to refer to symbols in shared libraries (or shared libraries that refer to other shared libraries):
 1. **PIC Data References**: Due to the fact that within an object file the distance between the code and data segments is constant, it can create internal references (based on byte offsets) to a *global offset table (GOT)* defined at the beginning of the data segments. All references to shared data can make references to the GOT and then at load time, the dynamic linker can relocate each GOT entry so that it contains the absolute address of the object. So its an indirect way of references shared objects.
