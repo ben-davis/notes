@@ -1447,3 +1447,84 @@ The second table is just another linear table that is big enough to fit all the 
 To lookup a value then is simple: hash the value, find the element in the first table, this gives us the hash function and the start and stop positions. We then hash the value again using the second hash function and the star and stop values to create a `mod` function.
 
 Perfect hashing is great any time we want to make a large number of queries to a static dictionary. There's a lot of fiddling we can do to this general scheme to minimize space required. *minimum perfect hashing* guarantees `O(1)` and zero empty slots.
+
+## 6.6 Minwise Hashing
+Hashing allows us to quikcly check whether a specific word `w` in a document `D₁` is also in `D₂`. Just build a hash table for `D₂` then check for `h(w)`.
+
+If we were to do this for each word in `D₁`, we'd get a count of the two document's intersection, from which we can then get a measure in similarity called the *Jaccard similarity*. It's the intersection over the union. Effectively the probability that the two documents are similar. 
+
+But ideally we could measure similarity without looking at each word. Then the question is which word should we use? We could just use the most frequent word. That'll be something like `the` so that's useless. We could use a random word but then it's unlikely we pick the same random word in both, even for identical documents.
+
+This is where *minwise hashing* comes in. It allows us to pick a random word, but one that's guaranteed to be the same for identical documents. It's simple: we hash each word and select the one with the minimum hash code. We do this for both documents and compare the min hashcode.
+
+If the docs are identical, then the min hash code will be same. If we had chosen a word at random, the probability of choosing the same word would have been `1/v`.
+
+If the docs are not identical, the probability that the min hash codes are the same depends on the number of words they have in common, meaning the intersection of the vocabularies, and the total vocabulary size of the documents. This is exactly the *Jaccard similarity*. So the probability of choosing the same min hashcode for two documents is *exactly* the Jaccard similarity.
+
+So the the variable `minhash(D₁) == minhash(D₂)` is an estimator of the Jaccard similarity. But there's significant variance of this variable. So we need to average together several variables in a similar way to reduce this variance.
+
+There are two ways to do this:
+1. *Use multiple hash functions*: Computing the minhash of two documents using multiple hash functions reduces the variance. It can be shown that using 400 hash functions would estimate the Jaccard similarity with an error <= 0.05.
+2. *Single hash function, multiple values*: If multiple hash functions are too CPU heavy, we can hash the first `k` min hash codes for each document. This creates a signature that can be used to determine similarity.
+
+But irrespective of the method, the key is to compute the min hash codes once and store it in an index.
+
+## 6.7 Efficient String Matching
+Strings are sequences of characters where order matters. We need an indicator to mark the end of the strings, usually either a special end-of-string character or a count `n` of the characters in the string.
+
+Substring search is a fundamental operation.
+
+The simplest algorithm overlays pattern `p` over text `t` and checks each character. As discussed in #2.5, this is `O(nm)` where `n` = `t` and `m` = `p`.
+
+There are algorithms with worst-case linear time (discussed later in the hitchhiker's guide). Here we discuss a hashing-based on with *expected* linear time.
+
+It's called the Rabin-Karp algorithm.
+
+It works by first hashing the pattern `p` and then the `m` sized substring starting at the `ith` position of `t`. If they match then they're most likely the same. Considering how rare the collision will be, we can spend a small amount of time checking when they do agree.
+
+We do this for each of the `ith` characters of `t` up to `n - m` (as that's the last position that contains a `m`-length substring).
+
+This leaves `n - m + 2` hashes (the `n - m + 1` windows of `t`, plus one hash of `p`). But it takes `O(m)` to hash an `m` length substring and `O(n)` hashes, leaving us with `O(nm)` expected again. THe worst-case is where there are lots of collisions and so we have to spend manual time checking.
+
+But the key is that when two hashes differ by a single character, we can use the previous hash to calculate the next. I won't go into the math but it's fairly simply. Just a two multiplications, one addition, and one subtraction needed. We can even just compute the hash of the entire text `t` and use it each time we need to compare. That way we have constant time hashing (we do it once and use it for all substring comparisons).
+
+That leaves us with `O(n + m)`. But we still have that randomization issue that can cause worst-case time with lots of collisions.
+
+Like before we solve that with some randomization. So if we just `mod` the result by some large `M`, we introduced randomization and reduce the likelihood of collisions. In fact it's `1/M`. So picking a good `M` is key. E.g. if `M = n`, we'd expect one collision per string. If we made `M = nᵏ` for `k >= 2`, we'd never see false collisions.
+
+## 6.8 Primality Testing
+Checking if an integer `n` is prime can be done naively by checking all integers in `2 <= x < n`. But obviously we only need to go up to `√n` (as any integer higher than that yields a product greater than `n`). So it's `O(√n)`. But this is still bad. Especially as `n` is the value of the number to check. If we check a huge number, then we'll be waiting a long time.
+
+A better solution involves randomization along with *Fermat's little theorem*.
+
+The theorem states: `aⁿ⁻¹ = 1(mod n) for all a not divisible by n".`
+
+So in Ben's english: if `n` is prime, then for any integer `a` that's not divisible by `n`, then `aⁿ⁻¹ - 1` is an integer multiple of `n`.
+
+Another way: `aⁿ⁻¹ mod n` is always `1` if `n` is prime and `a` is not divisible by `n`.
+
+But of course there can be cases where `aⁿ⁻¹ mod n = 1` for values of `n` that aren't prime. E.g. `a=4, n=15` then `a¹⁴ mod 15 = 1`, but `15` is not prime.
+
+So we need a statistical approach that will yield an answer to the is prime question with a high enough probability. We can do this by taking some sample of `aⱼ`, say 100 of them, that aren't divisible by `n` and if all those numbers `mod n` equal 1 then there's a good chance it's prime. The actual probability it's false positive will be `(1/2)¹⁰⁰`. So very unlikely.
+
+There is another issue: a very small fraction of numbers that violates Fermat's little theorem. They're called *Carmichael numbers*. They're infrequent enough that we can ignore.
+
+As the running time is always fast (as the number of tests is fixed) but there is a possibility of incorrect answwers, this is an example of a Monte Carlo type of randomized algorithm.
+
+Last thing: it might seem `aⁿ⁻¹ mod n` is complex. But (as we discussed in the section on fast exponenation) it can be calculated in `O(logn)`.
+
+## Where Do Random Numbers Come From?
+In the real world we can use physical processes to create outcomes that are unpredictable and hence indicative of true randomness. How do we do that in a machine?
+
+Well we use what is essentially a hash function. It's called a *linear congruential generator* or more commonly a *pseudo-random number generator*. It basically creates a new number that appears random based on a previous value:
+
+```
+Rₓ = (aRₓ₋₁ + c) mod y
+```
+Where `a, c, y, and R₀` are carefully selected constants. Essentially: we hash the previous random number to get the next one.
+
+Obviously these aren't truly random. Given a previous random number we calculate the next. If you really want to, given enough samples, you can calculate the constants and therefore the series of random numbers.
+
+But the numbers provide the appearance of randomness. And that randomness has the same statistical properties that woould be expected from a truly random source. So that's enough for our randomized algorithms.
+
+Obviously for cryptographic uses, these aren't enough. The hitchhiker's guide will have more on this.
