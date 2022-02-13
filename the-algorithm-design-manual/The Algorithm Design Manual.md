@@ -1,5 +1,5 @@
 # Chapter 1 - Introduction to Algorithm Design
-Algorithm's are procedures that solves *problems*. It must, in order to be correct, solve all *instances* of that problem. The difference between a general, well-specified problem and instances of that problem are key. Algorithms that only solve a subset of instances, and not the problem more generally, are incorrect.
+Algorithm's are procedures that solves *problems*.seta It must, in order to be correct, solve all *instances* of that problem. The difference between a general, well-specified problem and instances of that problem are key. Algorithms that only solve a subset of instances, and not the problem more generally, are incorrect.
 
 Three desirable properties of a good algorithm:
 1. Correct
@@ -1528,3 +1528,701 @@ Obviously these aren't truly random. Given a previous random number we calculate
 But the numbers provide the appearance of randomness. And that randomness has the same statistical properties that woould be expected from a truly random source. So that's enough for our randomized algorithms.
 
 Obviously for cryptographic uses, these aren't enough. The hitchhiker's guide will have more on this.
+
+# Chapter 7 Graph Traversal
+Graphs are a unifying theme of computer science due their ability to model so many different structures. They can essentially represent any relationship.
+
+Graph theory provides a language for talking about the properties of relationships which is crucial to solving many algorithmic problems. It's pragmatically more important to be aware of the many types of graph problems than it is to be aware of the specifics of particular graph algorithms.
+
+## 7.1 Flavors of Graphs
+A graph `G = (V, E)` is defined as a set of *vertices* `V` and contains a set of *edges* `E` of ordered or unordered pairs of veritices from `V`.
+
+There are several fundamental properties of graphs that determine which algorithms and data structures we'll use when analyzing them:
+
+1. *Undirected vs. directed*: A graph is *undirected* if an edge `(x, y)` in `E` implies an dege `(y, x)` is also in `E`. Otherwise it's *directed*. Most graphs of graph-theoretic interest are undirected. E.g. is a social network undirected? Depends on if you being my friend means I am your friend.
+2. *Weight vs. unweighted*: Each edge or vertex in a *weighted* graph is assigned a numerical value, or weight. E.g a road network might be weighted by road length. In *unweighted* graphs there are no weights. The differences between weighted and unweighted are particularly important when doing things like finding the shortest path.
+3. *Simple vs. non-simple*: Non-simple edges include *self-loops* and *multi-edges* (the same edge is present multiple times in the graph, e.g. two people are friends from college but also work together). Any graph without them is *simple*. All the algorithms in this book only work with simple graphs.
+4. *Sparse vs. dense*: Graphs are *sparse* if only a small fraction of verts have edges between them. The opposite is *dense*. A graph is *complete* if it contains all possible edges. There's no official definition of dense, but they typically have `Θ(n2)` edges while sparse graphs are linear in size.
+5. *Cyclic vs. acyclic*: A *cycle* is a closed path of 3 or more vertices that has no repeating vertices except the start/end point. An *acyclic* graph does not contain any cycles. *Trees* are undirected graphs that are connected and acyclic. Directed acyclic graphs are called *DAGs*. They arise naturally in scheduling problems (where an edge indicates order of operations). An operation called *topological sorting* orders the vertices of a DAG to respect these precedence constraints. Topological sorting is typically the first step of any algorithm on a DAG.
+6. *Emebdded vs topological*: A *topological* graph is one that is described only by its verts and edges. An *embedded* graph has its verts and edges described with geometric positions. Sometimes a graph can be described entirely from its geometry with no topological relationships. E.g the travelling salesman problem.
+7. *Implicit vs. explicit*: Implicit graphs are not explicitly constructed but instead built as we use them. A web crawler is a good example. If possible, it's typically easier to work with an implicit graph rather than construct and store the entire thing prior to analysis.
+8. *Labeled vs. unlabeled*: In a *labeled* graph each vert is assigned a unique name or identifier. If not, it's *unlabled*. Commonly graphs are labeled.
+
+Some other concepts:
+1. The *degree* of a vertex is determined by how many edges it is connected to. E.g. how popular someone is might be determined by the number of edges in a social network.
+2. A *regular* graph has equal degrees for all vertices.
+
+## 7.2 Data Structures for Graphs
+There are two basic choices for graph data structures: adjacency matrices and adjacency lists. For the following, assume the graph `G = (V, E)` has `n` vertices and `m` edges.
+
+1. *Adjacency Matrix*: We can represent G using an `n x n` matrix `M`, where `M[i, j] = 1` is an edge of `G` and `0` if it isn't. This allows fast answers to is if `(i, j)` is in `G` and rapid updates for edge insertion and deletion. But obviously considering it's `n x n` size, it wastes a lot of space if the graph has few edges.
+2. *Adjacency Lists*: We can more efficiently represent sparse graphs using linked lists to store the neighbors of each vertex. Obviously it's harder to verify if `(i, j)` is in `G`. But it's suprisingly easy to design graph algorithms that don't need to check this.
+
+
+Here are the relative trade-offs of each approach:
+
+| Comparison | Winner |
+| - | - |
+| Faster to test if (x, y) is in graph? | adjacency matrices |
+| Faster to find the degree of a vertex? | adjacency lists |
+| Less memory on sparse graphs?| adjacency lists (m + n) vs. (n2) |
+| Less memory on dense graphs? | adjacency matrices (a small win) |
+| Edge insertion or deletion? | adjacency matrices O(1) vs. O(d) |
+| Faster to traverse the graph? | adjacency lists Θ(m + n) vs. Θ(n2) |
+| Better for most problems? | adjacency lists |
+
+
+Let's use lists as they're generally more useful.
+
+Here's a data type to represent a adjacency list:
+
+```c
+#define MAXV 100 /* maximum number of vertices */
+
+typedef struct edgenode {
+  int y;                 /* adjacency info */
+  int weight;            /* edge weight, if any */
+  struct edgenode *next; /* next edge in list */
+} edgenode;
+
+typedef struct {
+  edgenode *edges[MAXV + 1]; /* adjacency info */
+  int degree[MAXV + 1];      /* outdegree of each vertex */
+  int nvertices;             /* number of vertices in the graph */
+  int nedges;                /* number of edges in the graph */
+  int directed;              /* is the graph directed? */
+} graph;
+```
+
+Each vertex is identified using an integer between 0 and `nvertices`. This is used as an index into `edges`. So the 10th vertix has an edge at `graph->edges[9]`. Inside `edges` are `EdgeNodes`, then connect the vertex given by the index into `graph->edges` and `EdgeNode->y`. The `EdgeNode` also has a `next` pointer to other edges that connect the original vertex to another vertex. So `graph->edges[x]` points to a linked list of edges from `x`.  
+
+```c
+void initialize_graph(graph *g, bool directed) {
+    int i; /* counter */
+
+    g->nvertices = 0;
+    g->nedges = 0;
+    g->directed = directed;
+
+    for (i = 1; i <= MAXV; i++) {
+        g->degree[i] = 0;
+    }
+
+    for (i = 1; i <= MAXV; i++) {
+        g->edges[i] = NULL;
+    }
+}
+```
+
+
+```c
+void read_graph(graph *g, bool directed) {
+    int i; /* counter */
+    int m; /* number of edges */
+    int x, y; /* vertices in edge (x,y) */
+
+    initialize_graph(g, directed);
+
+    scanf("%d %d", &(g->nvertices), &m);
+
+    for (i = 1; i <= m; i++) {
+        scanf("%d %d", &x, &y);
+        insert_edge(g, x, y, directed);
+    }
+}
+```
+
+The `insert_edge` function is the key one. The new `edgenode` is inserted into the beginning of the appropriate adjacency list since order doesn't matter.
+
+```c
+void insert_edge(graph *g, int x, int y, bool directed) {
+    edgenode *p; /* temporary pointer */
+
+    p = malloc(sizeof(edgenode)); /* allocate edgenode storage */
+
+    p->weight = 0;
+    p->y = y;
+    p->next = g->edges[x];
+
+    g->edges[x] = p; /* insert at head of list */
+
+    g->degree[x]++;
+
+    if (!directed) {
+        insert_edge(g, y, x, true);
+    } else {
+        g->nedges++;
+    }
+}
+```
+
+Printing just involves two nested loops:
+
+```c
+void print_graph(graph *g) {
+    int i; /* counter */
+    edgenode *p; /* temporary pointer */
+    
+    for (i = 1; i <= g->nvertices; i++) {
+        printf("%d: ", i);
+        p = g->edges[i];
+        while (p != NULL) {
+            printf(" %d", p->y);
+            p = p->next;
+        }
+        printf("\n");
+    }
+}
+
+```
+
+## 7.5 Traversing a Graph
+Visiting every edge and vertex is perhaps the most fundamental graph algorithm. All the basic book keeping ops on graphs are actually just traversals: printing or copying the graph, or converting between alternative representations.
+
+Some rules:
+1. *Efficiency*: We must not visit and vertex/edge more than once.
+2. *Correctness*: We must visit every vertex/edge once.
+
+The behind graph traversal is to just keep track of each vertex we have visited using one of three states:
+1. *Undiscovered*: initial state
+2. *Discovered*: vertex found but we have not checked all incident edges
+3. *Processed*: all vertex edges have been visited
+
+Initially only the root index is discovered. We then visit each edge discovering new vertices as we go. Once we have visited each edge, we move the vertex to processed and move on to another discovered edge and repeat.
+
+Undirected edges will be visisted twice, once from each direction. Directed edges will be visited once.
+
+## 7.6 Breadth-First Search
+In a breadth-first search of an undirected graph, we mark each discovered edge a direction, from the discoverer *u* to the discovered *v*. So *u* is the parent of *v*. Since each node has exactly one parent, except the root, this defines a tree of the verts in the graph. We build this parent connections not for the algorithm, but as useful information that can be used for other applications.
+
+Here's the pseudocode:
+
+```
+BFS(G, s)
+    Initialize each vertex u ∈ V [G] so
+        state[u] = “undiscovered”
+        p[u] = nil, i.e. no parent is in the BFS tree
+    state[s] = “discovered”
+    Q = {s}
+    while Q ̸= ∅ do
+        u = dequeue[Q]
+        process vertex u if desired
+        for each vertex v that is adjacent to u
+            process edge (u, v) if desired
+            if state[v] = “undiscovered” then
+                state[v] = “discovered”
+                p[v] = u
+                enqueue[Q, v]
+        state[u] = “processed”
+```
+
+Here it is in C.
+
+We use two booleans to maintain the processed/discovered (although a enum type would be better IMO):
+
+```c
+bool processed[MAXV+1]; /* which vertices have been processed */
+bool discovered[MAXV+1]; /* which vertices have been found */
+int parent[MAXV+1]; /* discovery relation */
+```
+
+```c
+void initialize_search(graph *g) {
+    int i; /* counter */
+    time = 0;
+
+    for (i = 0; i <= g->nvertices; i++) {
+        processed[i] = false;
+        discovered[i] = false;
+        parent[i] = -1;
+    }
+}
+```
+Once the vertex is discovered, it's placed on the queue. We process verts in FIFO, so the oldest verts are expanded first (closer to the root):
+
+```c
+void bfs(graph *g, int start) {
+  queue q;     /* queue of vertices to visit */
+  int v;       /* current vertex */
+  int y;       /* successor vertex */
+  edgenode *p; /* temporary pointer */
+
+  init_queue(&q);
+  enqueue(&q, start);
+  discovered[start] = true;
+
+  while (!empty_queue(&q)) {
+    v = dequeue(&q);
+    process_vertex_early(v);
+    processed[v] = true;
+    p = g->edges[v];
+
+    while (p != NULL) {
+      y = p->y;
+
+      if ((!processed[y]) || g->directed) {
+        process_edge(v, y);
+      }
+
+      if (!discovered[y]) {
+        enqueue(&q, y);
+        discovered[y] = true;
+        parent[y] = v;
+      }
+
+      p = p->next;
+    }
+
+    process_vertex_late(v);
+  }
+}
+```
+
+There are three functions that are called during the traversal: `process_vertex_early()`, `process_vertex_late()`, `process_edge()`. These are hooks that can do various things with (basic example: printing verts or counting edges).
+
+### Finding Paths
+The parent tree built during traversal represents a tree of discovery. The parent of `i` is defined as the vert that discovered it. The path has a unique property: it represents the shortest path from the root to a given node. Due to the way the parents are discovered and built, we have to find the path from the point `x -> root`, not `root -> x`:
+
+```c
+void find_path(int start, int end, int parents[]) {
+    if ((start == end) || (end == -1)) {
+        printf("\n%d", start);
+    } else {
+        find_path(start, parents[end], parents);
+        printf(" %d", end);
+    }
+}
+```
+Two points to remember when using BFS for finding the shortest path:
+1. Only useful if we started the traversal from the root.
+2. Only works if the graph is unweighted.
+
+## 7.7 Applications of Breadth-First Search
+Many elementary graph algorithms work by doing one or two traversals while doing something useful along the way. Implemented using adjacency lists, any algorithm using BFS will be linear as BFS runs in `O(n + m)`. This is optimial as we have to visit all `n` verts and `m` edges.
+
+### Connected Components
+A graph is *connected* if there's a path between any two vertices. E.g. In a friendship graph, it's connected if it's possible to get from any person A to any person Z through friendship.
+
+A *connected component* of an undirected graph is a subset of verts for which there is a path between every pair of verts but no paths between subsets. E.g. tribes that haven't been discovered would be separate pieces within the global friendship graph.
+
+An amazing number of seemingly complicated problems reduce to finding or counting connected components.
+
+Connected components can be found using breadth-first search as order does not matter. The process:
+1. Start at an arbitary vert and search for connected verts. These all belong to the same component.
+2. Then find an undiscovered vertex and build the connected graph for it.
+3. Repeat until no undiscovered vertices remain.
+
+```c
+void connected_components(graph *g) {
+    int c; /* component number */
+    int i; /* counter */
+
+    initialize_search(g);
+
+    c = 0;
+    for (i = 1; i <= g->nvertices; i++) {
+        if (!discovered[i]) {
+            c = c + 1;
+            printf("Component %d:", c);
+            bfs(g, i);
+            printf("\n");
+        }
+    }
+}
+```
+
+### Two-Coloring Graphs
+The *vertex-coloring* problem assigns a color to each vertex of a graph such hthat no edge inks any two verts of the same color.
+
+Easy solution: unique color per vertex. But what if we wanted to minimize the colors used?
+
+This problem arrises in scheduling applications, such as register allocation in compilers.
+
+A graph is *bipartite* if it can be colored using only two colors. They're important because they arise naturally in many applications. E.g. an "mutually interested-in" graph amongst heterosexual people: in this, gender defines a two-coloring of the graph.
+
+We can augment BFS to determine if the graph is bipartite. When descending from parent to child, give the child the opposite color to the parent. Then check any non-tree edges and if one connects two verts of the same color, then the graph is not bipartite.
+
+## 7.8 Depth-First Search
+For certain problems, BFS vs DFS makes no difference, but in others it's crucial.
+
+THe difference is the order in which they explore vertices. This is entirely dependent on the data structure used to store and access the *discovered* verts (processed doesn't matter):
+
+1. *Queue*: Using FIFO, oldest unexplored verts are processed first.
+2. *Stack*: Using LIFO, verts are explorered as soon as they are discovered, only switching to neighbouring ones once we're surrounded by previously discovered verts.
+
+DFS can use recursion to avoid the need for an explicit stack data structure. In pseudo:
+
+```
+
+DFS(G, u)
+    state[u] = “discovered”
+    process vertex u if desired
+    time = time + 1
+    entry[u] = time
+    for each vertex v that is adjacent to u
+        process edge (u, v) if desired
+        if state[v] = “undiscovered” then
+            p[v] = u
+            DFS(G, v)
+    state[u] = “processed”
+    exit[u] = time
+    time = time + 1
+```
+
+The time here isn't needed for traversal but it an interesting value to build up (similar to parents in BFS). As we're incrementing by one it gives us useful information:
+
+1. *Who is an ancestor*: If `x` is an ancestor of `y`, then the time interval of `y` must be nested within `x`.
+2. *How many descendants*: The delta between exit and entry times for a given vert tells us how many descendants the vert has (as the time is incremented on entry and exit, the number of descendants is half the delta). Neat trick.
+
+Timing is useful for things like topological sorting and biconnected/strongly connected components.
+
+An important property of DFS is that it inherently partitions the edges of an undirected graph into two classes:
+1. *tree edges*: those that discover new verts and are encoded in the parent relation of a given node
+2. *back edges*: those who's endpoint is an ancestor of the vert being expanded, so it points back into the tree
+
+As DFS expanded along a path before moving to neighbours, this partitioning means that we never travel along edges connecting a sibling or cousin node, only ancestors.
+
+
+DFS in C:
+
+```c
+void dfs(graph *g, int v) {
+  edgenode *p; /* temporary pointer */
+  int y;       /* successor vertex */
+
+  if (finished) {
+    return; /* allow for search termination */
+  }
+
+  discovered[v] = true;
+  time = time + 1;
+  entry_time[v] = time;
+
+  process_vertex_early(v);
+
+  p = g->edges[v];
+  while (p != NULL) {
+    y = p->y;
+
+    if (!discovered[y]) {
+      parent[y] = v;
+      process_edge(v, y);
+      dfs(g, y);
+    } else if (((!processed[y]) && (parent[v] != y)) || (g->directed)) {
+      process_edge(v, y);
+    }
+
+    if (finished) {
+      return;
+    }
+
+    p = p->next;
+  }
+
+  process_vertex_late(v);
+  time = time + 1;
+  exit_time[v] = time;
+  processed[v] = true;
+}
+```
+
+DFS is very similar to backtracking: Both involve exhaustive searching all possibilities along a path backing up only when there are no remaining options for futher advance.
+
+
+## 7.9 Applications of Depth-First Search
+**NOTE**: I didn't fully understand how to check for articulation vertices. More work will need to be done when reviewing this chapter.
+
+Although DFS is simple but suprisingly simple. The details of implementation are important. (Note to Ben: a lot of these issues I had to discover first hand when building Gather. Should have read this book to save pain.)
+
+The correctness of DFS depends on when we process a discovered edge and vert. In an undirected graph we have two edges connecting `x` with `y`. What if we want to take a different action depending on if it's the first or second time we visit?
+
+If `y` is undiscovered, then `(x, y)` is the first visit. But what if `y` is discovered? Well there are two options: it's either the 2nd time (which we know because `y` is completely processed), *or* `y` is an ancestor of `x`. So we have to have an ancestory check in there. This can be simplified to the rule that it must be a first traversal *unless* y is the parent of x (as on the first visit `y` must have become the parent to `x`).
+
+### Finding Cycles
+Back edges are key to finding cycles. If there are no back edges, only tree edges, then we have no cycles. Cycles can easily be detected with DFS when processing edges. If a given edge between `x` -> `y` does not have `x` as the parent of `y`, then we have a cycle:
+
+```c
+void process_edge(int x, int y) {
+    if (parent[y] != x) { /* found back edge! */
+        printf("Cycle from %d to %d:", y, x);
+        find_path(y, x, parent);
+        finished = true;
+    }
+}
+```
+This only works if we only process each directed edge exactly once. Above uses the `finished` flag to exit after the first cycle.
+
+### Articulation Vertices
+Any graph that's connected by a vertex that, if removed, would create two connected compontents is inherently fragile. The removal of that vertex destroys the connected of the graph. The vert is called the *articulation vertex* or *cut-node*.
+
+In general, the *connectivity* of a graph is the smallest number of vertices that if removed would disconnect the graph. The connectivity is obviously 1 if the graph has an articulation vertex. More robuest graphs without such a vertex are *biconnected*.
+
+A naive algorithm would temporarily delete each vertex and then traverse the remaining graph to determine if it's connected. But this would be `O(n(n + m))`.
+
+Instead we can take advantage of how DFS partitions a graph into two edges: tree edges and back edges. The tree edges can be thought of as the main route through the graph and the back edges as security cables connected pairs of verts along the tree with each other, such that any verts inbetween can be deleted without the graph becoming disconnected. Without these security cables, deleting any of these verts would disconnect the tree.
+
+So finding articulation verts depends on keeping track of the extent to which these back edges (security cables) link chunks of the DFS tree back to ancestor nodes.
+
+Let's keep track of `reachable_ancestor[v]` which denotes the oldest ancestor of `v` that can be reached from a descendant of `v` using a back edge. Initially we set the reachable ancestor of `v` to itself. Then when processing an edge from `x -> y`, if the edge is a back edge and if `y` is earlier than the previous reachable ancestor of `x` (initially itself), then we update `y` to be the reachable ancestor of `x`. The "age" of the vert can be determined by its age (when it was first reach by the algorithm).
+
+Using the reachability to determine whether the vert `v` is an articulation vertex depends on the type of articulation vertex (these are not mutually exclusive - note they're all the invention of the author):
+
+1. *Root cut-nodes*: If the root has two or more children, it must be an articulation vertex, as no edges from the subtree of the first child can connect to the subtree of the second child.
+2. *Bridge cut-nodes*: If the earliest reachable ancestor from `v` is itself it tells us the only edge connecting `v` is its parent. So therefore deleting this edge will disconnect the graph. So `parent[v]` must be an articulation index as well as `v` (as long as it's not a leaf).
+3. *Parent-cut nodes*: If the earlist reachable vert from `v` is the parent of `v`, then deleting the parent will sever `v`, unless the parent is the root. The reason this is not a bridge node is it has back edges.
+
+ A single edge whose deletion disconnects the graph is called a bridge; any graph without such an edge is said to be *edge-biconnected*.
+
+ Determining whether a given edge is a bridge can be done in linear time: we delete the edge and test for connectness in the resulting graph. We can also check if an edge `(x, y)` is a bridge if 1) it it a tree edge and 2) has no back edges from `y` or below to `x` or above. 
+
+## 7.10 Depth-First Search on Directed Graphs
+DFS is very useful due to the way it organizes the edges of a graph in a very precise way. From any given vertex, each edge will be assigned one of four labels: `tree`, `back`, `forward`, `cross`.
+
+For an *undirected* graph, every edge is either `tree` or `back`. But why is an edge `(x, y)` directed toward a descendant not a "foward" edge? No because we would have first traversed `(x, y)` when exploring `y`, making the edge a "back" edge.
+
+Could an edge `(x, y)` linking two unrelated verts be a "cross" edge? No because we would have discovered the edge when exploring `y`, making it a tree edge.
+
+So the way DFS works for undirected graphs means we'll only ever encounter `tree` and `back`.
+
+But for *directed* graphs, all edges are possible. Each edge type can be determined from the state, the discovery time, and the parent of each vertex:
+
+```c
+int edge_classification(int x, int y) {
+    if (parent[y] == x) {
+        return(TREE);
+    }
+
+    if (discovered[y] && !processed[y]) {
+        return(BACK);
+    }
+
+    if (processed[y] && (entry_time[y]>entry_time[x])) {
+        return(FORWARD);
+    }
+
+    if (processed[y] && (entry_time[y]<entry_time[x])) {
+        return(CROSS);
+    }
+
+    printf("Warning: self loop (%d,%d)\n", x, y);
+    
+    return -1;
+}
+```
+
+The only important difference between BFS and DFS is how they organize and label the edges. Other than that, they both traverse all edges and verts in a connected component. Both require a vertex in each component to traverse a disconnected graph.
+
+### Topological Sorting
+Topological sorting is the most important operation on DAGs. It orders the verts so that all directed edges go from left to right. This ordering literally doesn't exist if the graph has cylces and so is only approppriate for DAGs.
+
+Each DAG has at least one topological sort. Topological sorting is important because it gives us an ordering so we can process each vertex before any of its successors. E.g. data processing.
+
+Suppose we seek the shortest (or longest) path from `x` to `y`. If a vertex `v` is after `y`, we know it can't contribute to the path between `x` and `y` as there's no possible way to get from `v` back to `x`.
+
+Topological sorting can be done easily using DFS. A directed graph is a DAG if DFS encounters no back edges. Labeling the verts in **reverse** order that they are marked `processed` defines a topological sort of a DAG.
+
+To understand why consider what happens when we encounter each edge `(x, y)` from vertex `x`:
+
+1. If y is currently undiscovered, then we start a DFS of y before we can continue with x. Thus, y must be marked processed before x is, so x appears before y in the topological order, as it must.
+2. If y is discovered but not processed, then (x,y) is a back edge, which is impossible in a DAG because it creates a cycle.
+3. If y is processed, then it will have been so labeled before x. Therefore, x appears before y in the topological order, as it must.
+
+### Strongly Connected Components
+A directed graph is *strong connected* if there's a directed path between any two vertices. Road networks are a good example of strongly connected graphs.
+
+For a graph `G = (V, E)` to be strongly connected, two rules must be satisfied for any vert `v` in `G`:
+1. All verts must be reachable from `v`.
+2. All verts can reach `v`.
+
+To test 1), we just do a BFS or DFS from `v` and check all verts in `V` get discovered.
+To test 2), we first transpose `G` (reverse all edges) into `Gᵗ`, then do a BFS or DFS from `v` in `Gᵗ` to check all verts can be reached. Because we're dealing with a reversed graph, this check is equal to say "can all verts reach v".
+
+**NOTE: I don't properly understand this. Feeling tired. Come back to it**
+Know that all directed graphs can be partitioned into *strongly connected components*, such that a directed path exists between every pair of vertices in the component.
+
+
+# Chapter 8 - Weighted Graph Algorithms
+All the algorithms discussed so far have been for weightless graphs. Now let's discuss weighted graphs. The data structures are the same as before (as the `edgenode` contains a `weight`).
+
+## 8.1 Minimum Spanning Trees
+A *spanning tree* of a connected graph `G = (V, E)` is a subset of edges from `E` that creates a tree from all the verts in `V`. A *minimum spanning tree* is the spanning tree who's edges sum to the smallest weight possible.
+
+We use them wherever we need to reduce the cost of connecting a set of points, depending on the given unit of cost. For a road network it'd be the cost of the asphalt and construction.
+
+For a geometric set of points, the weight on an edge is just the distance between the two points it connects.
+
+There can be more than one spanning tree for any graph. 
+
+### Prim's Algorithm
+This algorithm is a greedy one: it starts at an arbitrary vertex and selects the next vertex not in the tree by choosing the one with the smallest weight.
+
+In psuedo:
+```
+Prim-MST(G)
+    Select an arbitrary vertex s to start the tree Tprim from.
+    While (there are still non-tree vertices)
+        Find the minimum-weight edge between a tree and non-tree vertex
+        Add the selected edge and vertex to the tree Tprim.
+```
+
+It's obvious this builds a spanning tree (as it only stops once all non-tree verts are included and never incluces verts already in the tree), but how do we know it selects the minimum? How can it be sure that by selecting one edge we didn't discount a future edge that would have reduced the overall weight of the tree?
+
+Apparently it's just proof by contradiction. You can show that for it to have failed, an edge must have taken us away from the minimum tree. But for that to have happened the edge must have been the minimum one connecting the tree to a non-tree vertex, which means it must be in the minimum tree. So we therefore cannot inadvertenly choose the wrong edge.
+
+The simple implementation of this would be to just select from the remaining non-tree verts, calculating the minimum edge each time. But we can be smarter by caching the distances. On insert only the new edges possible need to be recalculated.
+
+The pseudo is `O(nm)` (as it sweeps through m edges on each pass), but the optimized version that uses caching is `O(n²)`.
+
+### Kruskal's Algorithm
+Similar to Prim's, Kruskal's is greedy. But it works differently. Instead of working from a single vert and building a single tree, Kruskal's builds multiple connected components, eventually combinining them into a single tree. On each iteration it considers the next smallest edge and as long as it doesn't start and end in an existing component (thus creating a cycle), it adds it.
+
+The proof is again proof by contradiction.
+
+Naively, it runs in `O(nm)`, with each iteration doing a BFS/DFS on the graph to test if a given edge creates a tree or a cycle. But with a clecer use of a data structure called a *union-find* (which can support the component test in `O(n)`), we can lower the time complexity to `O(mlogm)`.
+
+### The Union-Find Data Structure
+A *set partition* breaks out subsets of some universal set of integers into a collection of disjoint subsets. The connected components in a graph can be represented as a set partition.
+
+For Kruskal's algorithm, we need a data structure that efficiently supports:
+1. *Same Component(v₁, v₂)*: Do verts v₁ and v₂ occur in the same connected component?
+2. *Merge components(C₁, C₂)*: Merge the given pairs of connected components into one component in response tothe insertion of an edge between them.
+
+THe *union-find* data structure represents each subset as a "backwards" tree, with pointers from a node to its parent. Each node of this tree contains a set element. The name of the set is taken from the key at the root. We also keep track of the num elements in each of the subtrees.
+
+It supports two operations:
+1. *Union(i, j)*: Links the roots of two trees such that `find(i)` == `find(j)`.
+2. *Find(i)*: Find the root of the tree containing *i*, returning the label of the root.
+
+To limit the cost of *Find* we want to limit the height of the tree. So that means when merging we want to merge in a way that minimizes the height. This is dependent on which of the two trees to merge we choose to be the new root. Turns out making the subtree with the least number of nodes the child of the other minimizes the height increase. This is because the height of the larger sub tree remains the same, with only the smaller one increasing by one. Basically because the subtree is smaller, making its root the root of the larger ones, means the height of the larger one dominates the smaller one, so no height change in the bigger one happens. The smaller one was given a new root, so it increases by one. If we did it the other way, the larger one would increase by 1, but because it contains a larger number of verts, the overally cost of that height increase is larger.
+
+Garding the cost: if we merge two trees of height 1, we get a tree of height 2. But now if we keep merging trees of height 1, the resulting tree is still 2. We would need to merge two height 2 trees, to get a tree of height 3. To get an extra unit of height we need to double the number of nodes. So at most `lgn` doublings can happen for `n` verts. So unions and finds are both `O(logn)`.
+
+### Variations on Minimum Spanning Trees
+1. *Maximum spanning trees*: If we simply negate the weight of the edges, Prim's or Kruskal's algorithms now return the maximum spanning tree.
+2. *Minimum product spanning trees*: Minimizes the product of weights rather than the sum. As `lg(a · b) = lg(a) + lg(b)`, the min spanning tree of a graph who's weights were replaced with their logs gives the min product tree of the original graph.
+3. *Minimum bottleneck spanning tree*: Finds the tree that minimizes the maximum edge weight in the graph. So the result is the tree who's max edge weight is the smallest it can be. Useful when dealing with costs.
+
+Other trees not solvable with the techniques discussed so far:
+1. *Steiner tree*: A minimum spanning tree that allows paths between verts.
+2. *Low-degree spanning tree*: The tree that minimizes the highest degree of a vert. The minimal graph would be a single tree with all verts degree 2, with the start and end degree 1 (caled a *Hamiltonian path*).
+
+
+## 8.3 Shortest Paths
+A *path* is a sequences of edges connecting two verts. There are often a huge number of paths between any two nodes in a large network. The shortest path is often of interest.
+
+BFS can identify the minimum-edge path in a graph, but only if unweighted.
+
+### Dijkstra's Algorithm
+Starting from a given vert, Dijkstra's finds all the shortest paths to all verts in the graph, including the designation we're looking for.
+
+The algorithm is built upon the fact that for the shortest path between two points `a` and `c` that goes through another point `b`, it must also go through the shortest path from `a` to `b`. So Dijkstra's is built in rounds, until all the verts have been exhausted.
+
+Starting with the given vert `s`, it finds the next vert that has the shortest distance to `s`. Once we've found the shortest distance to a node `x`, we will look at all outgoing edges of `x` to see whether there's a shorter path from `s` through `x` to some unknown vert. Very similar to Prim's.
+
+Each interation adds exactly one new vert to the tree of verts for which we known the shorted path from `s`. We keep track of the best path seen to date for all verts outside the tree and insert them in order of increasing cost.
+
+Pseudo:
+```
+ShortestPath-Dijkstra(G, s, t)
+    known = {s}
+    for each vertex v in G, dist[v] = ∞
+    dist[s] = 0
+    for each edge (s, v), dist[v] = w(s, v)
+    last = s
+    while (last ̸= t)
+        select vnext, the unknown vertex minimizing dist[v]
+        for each edge (vnext, x), dist[x] = min[dist[x], dist[vnext] + w(vnext, x)]
+        last = vnext
+        known = known ∪ {vnext}
+```
+
+So basically we start with `s` and set its distance to itself to 0. Then for all edges from `s`, we set the distance to the weighted edge between `s` and that vert. All other points are set to distance infinity. Then we choose the next closest vert `vnext`, and then for each edge from that vert, we set its destination vert `x`'s distance from `s` to min of either its current distance or the distance to `x` from `s` via `vnext`. Then `last` is set to `vnext`. We keep going until `last` is the destination vert we're looking for. 
+
+It's essentially the same algorithm as Prim's except the condition on when to add a vert to the tree is different. They minimize different things. So like Prim's it has `O(n²)` running time.
+
+### All-Pairs Shortest Path
+To compute the "center" of a graph that is the average distance between all verts requires computing the shortest path between all pairs of verts in a graph. So the algorithm returns a length for each path connecting every vert in a graph.
+
+This is done via *Floyd's Algorithm*. It produces an `n x n` matrix for the length of the path between each pair.
+
+We use an adjacency matrix to map out the verts in the graphs and the weights of the edges between them. Non-edges are indicated by MAXINT (the other option `0` could be a valid edge weight).
+
+The algorithm works by `n` rounds of increasing `k`, where `k` is the number of verts allowed between two given verts. Each iteration will increase `k` and then re-evaluate whether that now allows for a shorter path between all pairs. So it's just 3 nested loops:
+
+
+```c
+void floyd(adjacency_matrix *g) {
+    int i, j; /* dimension counters */
+    int k; /* intermediate vertex counter */
+    int through_k; /* distance through vertex k */
+
+    for (k = 1; k <= g->nvertices; k++) {
+        for (i = 1; i <= g->nvertices; i++) {
+            for (j = 1; j <= g->nvertices; j++) {
+                through_k = g->weight[i][k]+g->weight[k][j];
+                if (through_k < g->weight[i][j]) {
+                    g->weight[i][j] = through_k;
+                }
+            }
+        }
+    }
+}
+```
+
+This obviously is `O(n³)`. The path between two points can be given by retaining the parent matrix that contains the choice of the last intermediate index that gave the shortest distance between two points. We recursively use this matrix for each level. This gives us the path. Presumably the memory footprint of that is not insignificant for big graphs.
+
+### Transitive Closure
+We often want to know which verts are accessible from a given node. Floyd's gives us this. If for any pair the matrix's value is MAXINT, then it means no pairs exists between them.
+
+### A Quick War Story
+This one was interesting: how to use numeric keypad to quickly type a sentence. Each number refers to a letter, so a combination of numbers could be a word; a hash. The challenge is how to hash the numbers into the correct word as each list of numbers could represent many words. The answer is to somehow use the context in which the word appears.
+
+The solution they used was to tokenize the numbers into each possible word and then consider the token in context of the sentence. They modeled the context as a DAG, where each token was one step down (or right) in the tree, and each token having one or more word possilities. The goal then was to find the path through the graph that was most likely the correct sentence.
+
+It can easily be modelled as a shortest path problem by assigning weights to each edge that indicate the likelihood of that word being correct. So using statistics and grammatical constraints, a single Dijkstra pass gave the most likely sentence.
+
+The lession: hunting for a graph formulation to solve your problem is often the right idea.
+
+## 8.5 Network Flows and Bipartite Matching
+We can interpret an edge-weighted graph as a network of pipes, where the edge weight represents the capacity of that pipe. So using that we can ask questions like the *network flow problem*, which asks for the max amount of flow that can be sent from two given verts in a weighted graph while respecting the max capacities of each pipe.
+
+### Bipartite Matching
+**NOTE:** The book's description of matching is poor. A lot of these notes come from reading from other sources like wikipedia.
+
+The network flow problem is interesting, but its importance is in solving other graph problems. A classic example is *bipartite matching*.
+
+A *matching* in a graph `G = (V, E)` is a subset of edges `E' ⊂ E` such that no two edges of `E'` share a vertex.So to make that extra clear: a vert is strictly only in a single edge in that subset.
+
+A graph is *bipartite* or *two-colorable* if the verts can be divided into two sets, `L` and `R`, such that all edges in G have one vertex in `L` and one in `R`. This is another way of saying bipartite matching is finding an independent set of edges in a graph. A lot of naturally ocurring graphs are bipartite, e.g. jobs and people who can perform them.
+
+The maximum cardinality bipartite matching (the matching that contains the largest number of indepement edges) can be found by creating a source node `s` and connect to each vert in `L` with a weight of 1. Then create a node `t` connected by edge 1 to each vert in `R`. Then the maximum flow from s to t defines the largest matching in G. (not sure this is a good explanation..)
+
+I believe what the source and sink do is connect the otherwise disjoint edges so that a path can exist between them. So finding the maximum matching and the connecting it up means we're guauranteed to have maxed the possible flow through the network.
+
+A *perfect matching* is one that matches all verts in the graph - that is every vertex is an endpoint to an edge within the match.
+
+A *matched* vert is one that's an endpoint of one of the edges in the match. Otherwise it's unmatched.
+
+An *alternating path* is a path that begins with an unmatched vert and whose edges alternate between matching edges and non-matching edges. An *augmenting* path is an alternating path that starts and ends with a unmatched vertex. The relevance of this is that it's known that a matching `M` is only maximum (the largest number of edges) if and only if there is no augmenting path with respect to `M`. Basically an augmenting path represents extra capacity for a given matching.
+
+I believe the relevancy of all this matching stuff is that it allows us to find routes through networks of pipes with a given capacity that maximize flow. The reason that we need matches (edges that don't share verts) is that a vert can only carry as much as its minimal edge capacity. So a match with no augmenting paths means that there exists no extra capacity through the network.
+
+I'm not making notes on it as it's quite complicated - I'll save proper understanding for when I come back to the exercices. But know that the main algorithm for implementing this is called the `Edmonds-Karp` algorithm and it runs in `O(n³)`.
+
+## 8.6 Randomized Min-Cut
+The min-cut problem seeks to partition the verts in a graph into two sets so that there is the smallest number oed edges connecting the two sets. These edges represent the edges that if all removed would disconnect the graph.
+
+It's useful in analyzing network failure.
+
+An edge contraction merges two verts. The edge between those two points still exists, but it's a self-loop.
+
+The randomized min-cut algorithm takes advantage of the observation that if we contract an edge that is **not** a min-cut edge, then the number of min-cut edges remains the same, and also that if we contract enough edges so that we only have two verts left, then all the remaining parallel edges between those two points have to be min-cut edges.
+
+So the algorithm starts by random edge in `G` and contract it. Then keep doing this `n - 2` times until we have 2 verts. The number of edges are the min-cut edges, but not necessarily the smallest set of min-cut edges. So repeat the process some number of times and take the min of the result.
+
+This is a monte carlo algorithm as it has predictable efficiency but might not always be correct.
+
+What's the chances of it being wrong? Well we have to avoid the cut edges and doing that math this works out as the chance of success having the probability: `Θ(1/n²)`. So this isn't great but if we run it a bunch of times we're much more likely to stumble across the correct answer.
+
+## 8.7 Design Graphs, Not Algorithms
+There are lots of existing graph problems with great algorithms. The key to wielding them is not to come up with new algorithms, but correct model our own problem such that an existing solution becomes available.
