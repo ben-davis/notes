@@ -1,40 +1,124 @@
-      
+# SICP
 
-**SICP**
+# Chapter 1 - Building Abstractions with Procedures
+This books studies the idea of the *computational process*. Computer processes are abstract beings that live within a computer and manipulate other abstract things called *data*. The evolution of this process is called a *program*.
 
-  
+The book uses lisp as its language. Lisp began in the 50s as a language to reason about *recursive equations*. Despite its  roots in math, its a practical programming language. It's used for this book due to its unique properties that allow it express foundational ideas of programming language design. Higher-level abstractions built-in to more mainstream languages are able to be built up atomically using lisp. Specifically its ability to treat procedures as data (first-class functions).
 
-**Chapter 1.2**
+## 1.1 Elements of Programming
+Every powerful language has 3 mechanisms for combining simple ideas into complete ideas:
 
--   Linear recursion requires an expansion of building up a chain of deferred operations and then a reversed contraction where the operations are performed.
-	-   The amount of information required to track the process builds up linearly and so is called **linear recursion**.
+1. **primitive expressions**: the simplest entities the language is concerned with
+2. **means of combination**: how compound elements are built from simpler ones
+3. **means of abstraction**: how compound elements can be named and manipulated as units
 
--   Iteration on requires are the current variables required for the iterative process.
-	-   In general an iterative process is one whose state can be summarized by a fixed number of state variables, together with a fixed rule that describes how the state variables should updated as the process movies from state to state and an optional end condition.
-	-   If the number of steps required to compute a value N grows with linearly with N and so is called a linear iterative process.
+Generally we have two kinds of elements in programming: procedures and data.
 
--   Iterative processes only require those three variables. So if we were to stop and resume the process, we only need those variables.
--   But in recursive processes, we require all the information up until that point, managed in the interpreter, for us to know where in the process we are.
+### Expressions
+An expression is a piece of syntax that can be evaluated into a value. It's a combination of constants, variables, functions, and operators. Arguments to an operator (a procedure) are called arguments who's value comes from the operands.
 
--   Procedures and processes are different
-	-   Procedures are the definition of what should happen
-	-   Process refers to what actually happens when the procedure is invoked
+An interpreter uses a *read-eval-print loop* to repeatedly evaluate and print expressions given interactively.
 
--   Recursive procedures are actually an iterative process as it can be modeled using only three state variables
-	-   Functional languages are able to use tail-call recursion, an optimization that flattens the stack frame with each recursive call, meaning a recursive process is a constant one with no linearly expanding memory requirements.
-	-   Whereas in non-functional, C for example, recursive processes cannot use tail-call optimization and so grow linearly with the number of recursions.
-	-   I believe this because functional languages can make static guarantees about the nature of the recursion such that tail-call optimization can be guaranteed.
-	-   But know that tail-call means that another function is called (and presumably returned) as the last line of a function. With Scheme it’s guaranteed it will use tail-call optimization.\
-	-   Oh so it can be done in non-functional languages, but it requires a special optimization that requires knowing whether the call stack frame for the caller and the callee will be the same size, otherwise it’ll require resizing it each time its flattened which will be an expensive operation.
-	-   In functional languages, iteration is modeled as tail-call recursion and so is very efficient in comparison to non-functional. 
+### Naming and Environment
+A crucial aspect for a language is to determine how to use names to refer to computational objects. Typically we say a *name* identifies *variable* whose *value* is the object. Generally objects are defined/named with increasingly complexity.
 
-  
+The memory that keeps track of objects and their names is called an *environment*. In the most simple case it's just the *global environment*, although more can exist.
 
-**Chapter 1.3**
+### Evaluating Combinations
+In order to evaluate an expression formed of combinations, the interpreter must first individually evaluate each element, then combine them. Therefore the evaluation rule is *recursive*. The recursive nature of evaluation allows for arbitrarily nested combinations.
 
--   Higher order functions that compose other functions
--   Basic stuff
+These expressions form a process tree, with nodes representing operators and their operands, with the branches representing the order of combination. Combinations are evaluated at the leaves first and percolate upwards. This is generally known as *tree accumulation*.
 
+Some of the nodes (operators and operands) may be provided by the environment. E.g. `+`, `-`.
+
+Outside this general evalutation rule, there are *specials forms* reserved by the language for some special case, like defining variables.
+
+### Compound Procedures
+Simply allows various expressions to be bundled into a named unit that can then be referred to and executed.
+
+*Formal parameters* of a procedure are names used within the body to refer to the arguments of the procedure. A procedure's body is an expression that will yield the value of the procedure application when the formal parameters are replaced by the actual arguments to which the procedure is applied.
+
+### The Substitution Model for Procedure Application
+A similar model to expression evaluation is followed for procedure application, where instead of built-in operators, the values of the operands of the combination (the procedure's arguments) are applied to the value of the operator of the combination (the procedure).
+
+The substitution model is essentially replacing the parameters within a procedure with the arguments passed in. In reality it's more complex, but the idea of substitution is the right model.
+
+There are two evaluation methods for procedures:
+1. *Applicative order*: Evaluate the arguments then apply them to the procedure.
+2. *Normal order*: Fully expand the procedure then reduce. So the expressions within a procedure are expanded until primitive operators are left.
+
+### Conditional Expressions and Predicates
+Conditional expressions (case analysis) evaluate a sequence of predicates until one of them returns true, at which point its *consequent expression* is returned.
+
+An `if` statement is a special case form where there are only two cases in the case analysis.
+
+Conditional operators can be used to combine predicates. `or` and `and` are special forms that both have short circuiting.
+
+Computational procedures and mathematical functions share similarities, but the key difference is that procedures tend to be imperative whereas mathematical functions tend to be declarative.
+
+An interesting aside demonstrated by an example in the book: iteration can be modeled without any special construct from the language, just procedures. 
+
+### Procedures as Black-Box Abstractions
+Computing problems can usually be broken down into a number of subproblems, with each problem solved by a procedure. The entire program then can be viewed as a cluster of procedures that mirrors the decompisition of the problem into subproblems.
+
+This decomposition of a problem into procedures allows us to treat those procedures as black boxes, where its desired behaviour is understood, but how it implements it can be determined later. Generally referred to as *procedural abstraction*.
+
+A key to supporting this black box behaviour is the notion of procedures have local state. There are two types of variables used within a function:
+1. *bound variable*: A binding of a name to a value for a given scope. A procedure definition binds its formal paramaters, with those bound formal parameters scope the body of the procedure.
+2. *free variables*: Variables not bound within the function: neither formal parameters or local variables. *non-local* is synonymous. Procedures referring to free variables are depending on them being provided by the environment.
+
+Nesting of definitions is known as *block structure*. Related to *lexical scoping*: the use of position within source code to define the scoping of bindings.
+
+## 1.2 - Procedures and the Processes They Generate
+To understand how our programs behave we must learn to visualize the processes generated by the procedures within our program. A procedure is a pattern for the *local evolution* of a computational process.
+
+We can broadly define these processes as either being *iterative* or *recursive*. This determines the "shape" of the process as it evolves.
+
+Linear recursion requires an expansion of building up a chain of deferred operations and then a reversed contraction where the operations are performed. So the "shape" expands before contracting. This is a recursive process. Whereas an iterative process its "shape" remains the same as the process evolve; it's flat, it neither expands or shrinks.
+
+The amount of information required to track the recursive process builds up linearly and so is called **linear recursion**.
+
+All iteration requires on the other hand are the current variables required for the iterative process.
+
+In general an iterative process is one whose state can be summarized by a fixed number of state variables, together with a fixed rule that describes how the state variables should updated as the process movies from state to state and an optional end condition.
+
+If the number of steps required to compute a value N grows with linearly with N, we call it a linear iterative process.
+
+It's important to differentiate between a recursive procedure and a recursive process: a recursive procedure is simple a procedure that's defined in terms of itself, whereas a recursive process is one that evolves recursively. It is possible to use a recursive procedure to create an iterative process.
+
+Another way to think about interative vs recursive is that with an iterative process, the program variables at any given time capture the complete description of the program at that time. Whereas a recursive process contains "hidden" information contained within the call stack that must be unwound in order for it to be fully capture.
+
+Iterative processes only require those three variables. So if we were to stop and resume the process, we only need those variables. But in recursive processes, we require all the information up until that point, managed in the interpreter, for us to know where in the process we are.
+
+Generally, procedures and processes are different:
+1. Procedures are the definition of what should happen
+2. Process refers to what actually happens when the procedure is invoked
+
+Regardless of the type of process, both can be analyzed for their space and time usage. I won't go into detail as the ADM book is far more complete.
+
+With a naive implementation, recursive processes would be much slower than iterative processes due to the storage required to keep track of state (bound variables and return address). But some languages are able to use *tail-call recursion*, an optimization that flattens the stack frame with each recursive call, meaning a recursive process is a constant one with no linearly expanding memory requirements. This relies on a *tail-call*, which means that another function is called (and returned) as the last line of a function.  *tail-recursive* means a self tail-call.
+
+This is true of most (all?) functional languages as there are restraints around how memory is allocated and used within functions, so the stack frame of a function is fully determined up front. This allows it to safely flatten the stack frame with each recursive call. Scheme for example does this.
+
+In non-functional, C for example, the memory usage of a function can't always be statically understood, so recursive processes cannot use tail-call optimization and so grow linearly with the number of recursions.
+
+Tail-call optimization can be done in non-functional languages, but it requires a special optimization that requires knowing whether the call stack frame for the caller and the callee will be the same size, otherwise it’ll require resizing it each time its flattened which will be an expensive operation.
+
+In functional languages, iteration is modeled as tail-call recursion and so is very efficient in comparison to non-functional. 
+
+
+## 1.3 Formulating Abstractions with Higher-Order Procedures
+Higher-order procedures are procedures that manipulate other procedures. They are key to allowing us to create better abstractions. For example, they allow us to define the concept of *summing cubes* in terms of a *sum* rather than directly manipulating numbers.
+
+Essentially the abilitly to define procedures in terms of other procedures gives us building block upon which we can build higher and higher levels of useful abstraction. It provides significant expression power.
+
+Defining procedures that themselves return procedures increases this expressive power even more as it allows us to compose new functionality using existing functionality.
+
+Languages with *first-class* procedures allow them to:
+1. Be named by variables.
+2. Be passed as arguments to procedures.
+3. Be returned as the results of procedures.
+4. Be included in data structures.
   
 
 **Chapter 2.1**
