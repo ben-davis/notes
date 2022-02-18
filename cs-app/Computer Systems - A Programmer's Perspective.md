@@ -2061,7 +2061,7 @@ There are multiple techniques for apps to refer to symbols in shared libraries (
 A feature of Linux linkers that supports intercepting shared library functions. Can be done at compile-time, link-time, or run-time. Compile-time is just a flag to `gcc` that tells it to look in a different location for header implementations, link-time is similar but involves telling the linker to rewrite a given symbol to a different name which can then be provided, and run-time involves using `LD_PRELOAD` to provide an alternate implementation for symbols in a library.
 
 # Chapter 8 Exceptional Control Flow
-While the machine is on, the PC assumes a sequence of values, a0, a1, ... an -1. Each transition from one to another is called a control transfer. A sequence of transfers is called the flower of control, or control flow, of the processor.
+While the machine is on, the PC assumes a sequence of values, a0, a1, ... an -1. Each transition from one to another is called a control transfer. A sequence of transfers is called the flow of control, or control flow, of the processor.
 
 Kinds of control flow:
 1. "smooth": each instruction is adjacent in memory
@@ -2073,18 +2073,19 @@ The 3rd kind are known as exception control flow (ECF). Types of ECF:
 2. OS level: transitions from one process to another via context switches
 3. App level: a process can send a signal to another process that abruptly transfers control.
 
-- ECF is the basic mechanism used by an OS to implement I/O, processes, and virtual memory.
-- Apps interact with the OS via a form of ECF known as a trap or system call. Examples include creating a new process, writing data to a disk, reading data from the network, terminating the current process.
-- ECF is used for concurrency.
-- Languages also use ECF for software exceptions.
+ECF is the basic mechanism used by an OS to implement I/O, processes, and virtual memory. Apps interact with the OS via a form of ECF known as a trap or system call. Examples include creating a new process, writing data to a disk, reading data from the network, terminating the current process.
+
+ECF is what allows us to create concurrent processes. Languages also use ECF for software exceptions.
 
 ## 8.1 Exceptions
 Exception (hardware exceptions - software exceptions are different): an abrupt change in the control flow in response to some change in the processor's state. A change in state is called an *event*.
 
 The event might be related to the current instruction (arithmetic overflow, page fault, divide by zero) or something unrelated (I/O request completes).
 
-In any case, when the processor detects an event it makes an indirect procedure call (the exception) through a jump table called an *exception table*, to an OS system routine (the *exception handler*), that is specifically designed to process this particular type of event. When finished, 3 things could happen:
-1. Returns control the current instruction that was executing
+In any case, when the processor detects an event it makes an indirect procedure call (the exception) through a jump table called an *exception table*, to an OS system routine (the *exception handler*), that is specifically designed to process this particular type of event.
+
+When the excpetion handler is finished, 3 things can happen:
+1. Returns control to the current instruction that was executing prior to the exception
 2. Returns control to the next instruction that would have executed had the exception not occurred
 3. Aborts the interrupted program
 
@@ -2102,9 +2103,9 @@ E.g. OS exceptions:
 1. System calls
 2. Signals from external I/O.
 
-At boot time, the OS allocates and initializes a jump table called an *exception table* for each exception. When an exception occur, the CPU uses this to determine the correct handler. It finds the address of the handler by taking using the special CPU register called *exception table base register* and adds the integer ID of the exception.
+At boot time, the OS allocates and initializes a jump table called an *exception table* for each exception. When an exception occurs, the CPU uses this to determine the correct handler. It finds the address of the handler by using the special CPU register called an *exception table base register* and adds the integer ID of the exception.
 
-Similar to regular procedure call, but the return address will either be the current instruction or the next. CPU also stores some data like the current condition codes to use when returning control. Exception handlers run in *kernel mode* (have access to all system resources).
+Similar to regular procedure call, but the return address will either be the current instruction or the next. The CPU also stores some data like the current condition codes to use when returning control. Exception handlers run in *kernel mode* (have access to all system resources).
 
 ### Classes of exceptions
 
@@ -2122,10 +2123,10 @@ Traps are intentional exceptions that occur as a result of executing an instruct
 
 The most important use: a procedure-like interface between user programs and the kernel - system calls. E.g. `read`, `fork`, `execve`, `exit`. To allowed controlled access to their kernel services, CPUs provide a special `syscall` instruction that can. be executed to request a given kernel service.
 
-Regular user functions run in *user mode* which restricts the types of instructions they can execute. A system call runs in *kernel mode* which allows access to privileged instructions.
+Regular user functions run in *user mode* which restricts the types of instructions they can execute. A system call runs in *kernel mode* which allows access to privileged instructions. So using a trap is a method to communicate with the kernel without requiring special privilidges.
 
 #### Faults
-Faults result from error conditions that the handler may be able to correct. If the handler can correct is, it returns control to the faulting instruction to try again. Otherwise the handler returns to an `abort` routine in the kernel that terminates the program.
+Faults result from error conditions that the handler may be able to correct. If the handler can correct it, it returns control to the faulting instruction to try again. Otherwise the handler returns to an `abort` routine in the kernel that terminates the program.
 
 Classic example: page fault. Occurs when an instruction references a virtual address whose corresponding page is not resident in the memory and therefore must be retrieved from disk. The handler loads it and returns to the faulting instruction which then runs again and is able to access the address.
 
@@ -2168,7 +2169,9 @@ In assembly on Linux, you'd write the appropriate values to the registers used b
 ## 8.2 Processes
 Exceptions are the basic building blocks that enable the OS kernel to provide the notion of a *process*. Processes give the illusion that our program is the only one running on the system.
 
-Classic definition: an instance of a program in execution. Each program in the system runs in the context of some process. The context consists of the state the program needs. State: program's code and data stored in memory, its stack, the contents of its general purpose registers, its program counter, environment variables, and the set of open file descriptors.
+Classic definition: an instance of a program in execution. Each program in the system runs in the context of some process. The context consists of the state the program needs.
+
+State: program's code and data stored in memory, its stack, the contents of its general purpose registers, its program counter, environment variables, and the set of open file descriptors.
 
 Running a program involves the shell creating a new process and then runs the executable in the context of this new process.
 
@@ -2181,7 +2184,7 @@ Multiple processes can run together by *preempting* each of them to temporarily 
 Concurrent flow happens when two logical flows overlap in time. They are said to *run concurrently*. Also known as *multitasking* when referring to processes. Each time period that process executes a portion of its flow is called a *time slice*.
 
 ### Private Address Space
-Private subset of all address space. Private in that in general processes cannot read or write to each other's address space. I've written before about the memory layout of a process. But the new bit I'll add is the kernal virtual memory at the top of the address space is reserver for code, data, and the stack that the kernel uses when it executes instructions on behalf of the process (e.g. when the application program executes a system call).
+Private subset of all address space. Private in that in general processes cannot read or write to each other's address space. I've written before about the memory layout of a process. But the new bit I'll add is the kernel virtual memory at the top of the address space is reserved for code, data, and the stack that the kernel uses when it executes instructions on behalf of the process (e.g. when the application program executes a system call).
 
 ### User and Kernel Modes
 In order for the OS kernel to provide an airtight processes abstraction, in must provide a way to restrict the instructions that are available to an application, as well as the portions of the address space that it can access.
@@ -2197,7 +2200,9 @@ Linux provides `/proc` filesystem to access information about the contents of ke
 ### Context Switches
 OS implements multitasking via higher form of ECF called context switches.
 
-Kernel maintains a *context* for each process. It's the state the kernel needs to restart a preempted process. Includes: values of general-purpose registers, the FP registers, the PC, user's stack, status registers, the kernel's stack, and kernel data structures like the page table (info about the address space), the process table (info about current process),  file table (info about files the process has opened).
+Kernel maintains a *context* for each process. It's the state the kernel needs to restart a preempted process. 
+
+Includes: values of general-purpose registers, the floating-point (FP) registers, the PC, user's stack, status registers, the kernel's stack, and kernel data structures like the page table (info about the address space), the process table (info about current process),  file table (info about files the process has opened).
 
 At certain points the OS can decide to preempt the current process and restart a previously preempted process. It's called *scheduling* and handled by kernel code: *scheduler*. When the kernel selects a new process to run, it's said to have *scheduled* that process. Transferring control to the new process is called a context switch, which:
 1. Saves the context of the current process
@@ -2206,7 +2211,7 @@ At certain points the OS can decide to preempt the current process and restart a
 
 The OS can decide to switch context during a syscall. Rather than wait for it to return it can choose to run another process.
 
-Can also occur as a result of an interrupt, creating via a periodic timer. So ever 1ms it can switch processes.
+Can also occur as a result of an interrupt, creating via a periodic timer. So every 1ms it can switch processes.
 
 Example:
 1. Process A is executing
@@ -2227,7 +2232,8 @@ From a programmer's perspective, a process has 3 states:
 3. **Terminated**: Stopped permanently. 3 reasons it can happen: 1) receives a kill signal 2) returns from `main` 3) called `exit`.
 
 Creating a new child process results in a child that's mostly the same as the parent (the child has COPIES (not shared) address space, code and data segments, heap, shared libraries, and user stack) but the have a different PID (and so presumably are scheduled independently). 
-	- As they share files, both parent and child's `stdout` are the same file and so we'll see it in the console.
+
+As they share files, both parent and child's `stdout` are the same file and so we'll see it in the console.
 	
 ### Reaping Child Processes
 When a process terminates, the kernel doesn't remove it, instead its kept in a terminated state until it is *reaped* by its parent. A terminated process that hasn't been reaped is called a *zombie*.
@@ -2238,7 +2244,7 @@ When a process is terminated, any children have the `init` process as their adop
 `execve` loads and runs a program in the context of the current process. It calls the startup code that sets up the stack and passes control to the main routine of the new program.
 
 The memory layout has been described before, but let's get specific about the user-space stuff (starting from the bottom - highest address):
-1. Array of null-terminated pointers , each of which points to an environment variable string on the stack.
+1. Array of null-terminated pointers, each of which points to an environment variable string on the stack.
 2. Array of null-terminated strings for the args provided to the program, each of which points to an argument string on the stack.
 3. 3 args to the main function:
 	1. `argc`: number of non-null pointers n `argv`
@@ -2249,6 +2255,12 @@ The memory layout has been described before, but let's get specific about the us
 Unix shells and web servers make heavy use of `fork` and `execve`.
 
 A shell is an interactive application-level program that runs other programs on behalf of the user. Reads a sequence of *read/evaluate* steps and then terminates. It basically just reads commands from the `stdin` file and calls `execve`, and has options for foregrounding/backgrounding the process. It'll use `waitpid` to wait for the job to terminate.
+
+Within unix a shell typically refers to a command-line shell. But a shell is just simply an interface that allows users to launch programs. So the Windows "window managers" or "desktop environments" are all examples of shells. For MacOS, "Finder" is a the graphical shell used to interact with the machine. For Unix, GNOME provides a graphical shell as a part of its GNOME desktop environment.
+
+A terminal-emulator is a programs that emulates old-style video terminals. In practice this means it reads and writes text streams and usually supports text escape sequences for things like color. As it's a text-based interface, it's used when the application to be run requires a command-line interface. Typically a terminal emulator runs a command-line shell like bash or zsh which, as mentioned above, is a user-space program that can launch other programs.
+
+So terminal emulators and shells are often used interchangeably but they are actually different.
 
 ## 8.5 Signals
 Linux signals are a higher form of ECF that allow processes and the kernel to interrupt other processes with different events.
@@ -2307,15 +2319,17 @@ Note: `longjmp` doesn't deallocate intermediate functions so can cause memory le
 - **/proc**: Virtual filestyle that exports the contents of numerous kernel data structures in ASCII. E.g. `/proc/loadavg`.
 
 ## 8.8 Summary
->“Exceptional control flow (ECF) occurs at all levels of a computer system and is a basic mechanism for providing concurrency in a computer system.
+>Exceptional control flow (ECF) occurs at all levels of a computer system and is a basic mechanism for providing concurrency in a computer system.
 >
 >At the hardware level, exceptions are abrupt changes in the control flow that are triggered by events in the processor. The control flow passes to a software handler, which does some processing and then returns control to the interrupted control flow.
 >
 >There are four different types of exceptions: interrupts, faults, aborts, and traps. Interrupts occur asynchronously (with respect to any instructions) when an external I/O device such as a timer chip or a disk controller sets the interrupt pin on the processor chip. Control returns to the instruction following the faulting instruction. Faults and aborts occur synchronously as the result of the execution of an instruction. Fault handlers restart the faulting instruction, while abort handlers never return control to the interrupted flow. Finally, traps are like function calls that are used to implement the system calls that provide applications with controlled entry points into the operating system code.
 >
->At the operating system level, the kernel uses ECF to provide the fundamental notion of a process. A process provides applications with two important abstractions: (1[…]”
+>At the operating system level, the kernel uses ECF to provide the fundamental notion of a process. A process provides applications with two important abstractions: (1) logical control flows that give each program the illusion that it has exclusive use of the processor, and (2) private address spaces that provide the illusion that each program has exclusive use of the main memory.
 >
->Excerpt From: Randal E. Bryant. “Computer Systems: A Programmer's Perspective.” Apple Books.
+>At the interface between the operating system and applications, applications can create child processes, wait for their child processes to stop or terminate, run new programs, and catch signals from other processes. The semantics of signal handling is subtle and can vary from system to system. However, mechanisms exist on Posix-compliant systems that allow programs to clearly specify the expected signal-handling semantics.
+>
+>Finally, at the application level, C programs can use nonlocal jumps to bypass the normal call/return stack discipline and branch directly from one function to another.
 
 # Chapter 9 Virtual Memory
 Provides 3 important capabilities:
