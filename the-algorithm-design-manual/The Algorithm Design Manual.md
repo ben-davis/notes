@@ -2226,3 +2226,696 @@ What's the chances of it being wrong? Well we have to avoid the cut edges and do
 
 ## 8.7 Design Graphs, Not Algorithms
 There are lots of existing graph problems with great algorithms. The key to wielding them is not to come up with new algorithms, but correct model our own problem such that an existing solution becomes available.
+
+# Chapter 9 - Combinatorial Search
+There are some problems worth solving by using exhaustive search techniques. The boundaries of the usefullness of these techniques exist, but due to the speed of modern machines, it can be worth it.
+
+Backtracking is a technique for listing all the possible solutions for a combinatorial algorithm problem.
+
+## 9.1 Backtracking
+Backtracking is a systematic way to run through all the possible configurations of a search space, either:
+1. All possible arrangements of objects (permutations)
+2. All possible ways of building a collection of them (subsets)
+
+Other examples: all spanning trees of a graph, all paths between two verst, all possible ways to partition verts into color classes.
+
+What all of these have in common is the need to generate each possible configuration *exactly once*, which requires that we define a systematic generation order.
+
+We can define a given configuration as a vector `a = (a₁, a₂, ... an)`. This could represent a subset, a unique ordering, etc.
+
+Backtracking works by building up a tree of partial solutions that eventually completed, where an edge between x and y means that the solution at `y` means it extends the partial solution at `x`. A partial solution is defined as  `a = (a₁, a₂, ... ak)`. Each iteration of the backtracking algorithm builds upon the partial solutions until they're considered complete.
+
+We can think of backtracking then as a DFS on the implicit graph of partial solutions, which gives us a recursive algorithm:
+
+```
+Backtrack-DFS(a, k)
+    if a = (a1, a2, ..., ak) is a solution, report it.
+    else
+        k=k+1
+        construct Sk, the set of candidates for position k of a
+
+        while Sk ̸= ∅ do
+            ak = an element in Sk
+            Sk =Sk−{ak}
+            Backtrack-DFS(a, k)
+```
+
+So essentially backtracking works by enumerating all possibilites and ensures efficiency by never visiting a complete configuration more than once.
+
+In C:
+```c
+void backtrack(int a[], int k, data input) {
+  int c[MAXCANDIDATES]; /* candidates for next position */
+  int nc;               /* next position candidate count */
+  int i;                /* counter */
+
+  if (is_a_solution(a, k, input)) {
+    process_solution(a, k, input);
+  } else {
+    k = k + 1;
+    construct_candidates(a, k, input, c, &nc);
+    for (i = 0; i < nc; i++) {
+      a[k] = c[i];
+      make_move(a, k, input);
+      backtrack(a, k, input);
+      unmake_move(a, k, input);
+      if (finished) {
+        return;
+      }
+    }
+  }
+}
+```
+It's pretty simple:
+1. On each iteration we check whether the first `k` elements of vector `a` make a complete solution (for whatever problem is being solved). If it is we "process" it, e.g. print it out, add it to a list, etc.
+2. Generate all new configuration from the `kth` position of `a`, given the existing contents of the first `k - 1` positions. So this method just generates the all the possible answers for the `kth` position.
+3. Recursively backtrace of each new configuration (which branches out from that configuration, building a tree).
+
+## 9.2 Examples of Backtracking
+Let's take that  algorithm from above and see how it allows us to solve particular problems.
+
+### Constructing All Subsets
+So first step here is to figure out how many objects are needed to represents all subsets of an `n`-element set. There are `2ⁿ` sets of `n` elements. Each object is an `n` size boolean vector, where the value for a given cell indicates whether it's included in the set.
+
+For our backtrace algorithm, the solution is complete whenever `k` == `n` and new candidates are constructed by simply returning two options: `true, false`.
+
+So here are the methods in C:
+
+```c
+int is_a_solution(int a[], int k, int n) {
+    return (k == n);
+}
+
+void construct_candidates(int a[], int k, int n, int c[], int *nc) {
+    c[0] = true;
+    c[1] = false;
+    *nc = 2;
+}
+```
+
+We start the process like so:
+
+```c
+void generate_subsets(int n) {
+    int a[NMAX]; /* solution vector */
+    backtrack(a, 0, n);
+}
+```
+
+### Constructing All Permutations
+Again we need to start by counting the number of possible permutations `{1, ..., n}`. For the first element element, there are `n` choices, then `n - 1` choices, etc. So with that we know that the permutations are given by `n!`.
+
+So each solution again is sized `n`. But this time the candidates for each element `i` are given by all elements that have no appeared in the `i - 1` elements of the partial solution, specifically: `Sk = {1, ..., n} - {a₁, ..., ak}` and the solution is complete when `k = n`.
+
+```c
+void construct_candidates(int a[], int k, int n, int c[], int *nc) {
+  int i;              /* counter */
+  bool in_perm[NMAX]; /* what is now in the permutation? */
+
+  for (i = 1; i < NMAX; i++) {
+    in_perm[i] = false;
+  }
+
+  for (i = 1; i < k; i++) {
+    in_perm[a[i]] = true;
+  }
+
+  *nc = 0;
+  for (i = 1; i <= n; i++) {
+    if (!in_perm[i]) {
+
+      c[*nc] = i;
+
+      *nc = *nc + 1;
+    }
+  }
+}
+```
+This involves creating a bit-vector data structure to make the `in_perm` check constant.
+
+### Constructing All Paths in a Graph
+A *simple* path through a graph is one where no verts are repeated. We can't figure out how many paths they'll be ahead of time as it depends on the internal structure of the graph.
+
+Candidates can be constructed by evaluating possible verts from the `kth` vert that have no already been included in the solution:
+
+```c
+void construct_candidates(int a[], int k, paths_data *g, int c[], int *nc) {
+  int i;                 /* counters */
+  bool in_sol[NMAX + 1]; /* what's already in the solution? */
+  edgenode *p;           /* temporary pointer */
+  int last;              /* last vertex on current path */
+
+  for (i = 1; i <= g->g.nvertices; i++) {
+    in_sol[i] = false;
+  }
+
+  for (i = 0; i < k; i++) {
+    in_sol[a[i]] = true;
+  }
+
+  if (k == 1) {
+    c[0] = g->s; /* always start from vertex s */
+    *nc = 1;
+  } else {
+    *nc = 0;
+    last = a[k - 1];
+    p = g->g.edges[last];
+
+    while (p != NULL) {
+      if (!in_sol[p->y]) {
+        c[*nc] = p->y;
+        *nc = *nc + 1;
+      }
+
+      p = p->next;
+    }
+  }
+}
+```
+
+A solution is complete where the last vert equals the destination vert:
+
+```c
+int is_a_solution(int a[], int k, paths_data *g) {
+    return (a[k] == g->t);
+}
+```
+
+## 9.3 Search Pruning
+Backtracking is guaranteed to be correct as it enumerates all possibilities. But this obvious can be wasteful as it will carry on evolving a partial solution even if it could either never be a complete solution or the complete solution would never satisfy the goal we have in mind. E.g. say we knew that a solution that went from `a -> b` was illegal. It would be pointless to keep evaluating the solution.
+
+Take the travelling salesman problem (where we're looking for the cheapest tour of all points). If we discover along the way a complete tour `t` of cost `Ct`. If we then find a partial solution `a` whose cost > `Ct`, why keep exploring it?
+
+So *pruning* is the technique of abandoning a search direction the instant we know it can't be extended into a full solution. How we know depends on the application.
+
+## 9.4 Sudoku
+I won't go into detail as it's very similar to the previous problems. The interesting parts are:
+1. We really can't afford to explore every possible configuration of a Sudoku board as it could take a long time if the board doesn't have many filled squares. So we need to do some sort of lookahead to determine paths worth exploring.
+2. Each iteration involves selecting which new square in the 9x9 to attempt to fill.
+3. We want to minimize filling squares that will lead to another square that cannot be filled (no legal candidates).
+4. So how we choose that next square has a big impact on performance. If we choose squares that only have a single possible candidate, then we massively reduce the search space of possible next squares.
+5. How we determine the possible candidate values is key too. We could just only consider the 3x3, the row, and the columns when selecting (the *local count*). But we can do better. If instead we were to look at the other *open squares* and see how the possible values found via the *local count* method would effect the possible values for those open squares. If we find that any possible value for the current square has the effect of making it impossible for another square to be legally filled, then we know our current route is illegal. So we should backtrack immediately rather than waiting until we eventually get to that square and discover it can't be filled.
+
+So in this case we're using `make_move` and `unmake_move` to track squares that have been set and then unsetting them if the recursive call doesn't yield a valid solution. We obviously want to minimize the backtracks, so how we choose the next square to explore, or how we prune the search space, is key to creating a performant algorithm.
+
+## 9.6 Best-First Search
+The general idea of the backtrack implementation above is to explore your best options before you least promising ones. Above the search order was determined by which candidate solutions were given first. Items near the front were explored before those further back. Ordering this candidate list is key to finding the right solution as far as possible.
+
+The problems so far have been *exististential* - there was one solution being sought after. But there's another class where we instead look for the solution that minimizes some cost. These are called *optimization problems*.
+
+The naive approach would be to generate all solutions then choose the one with the smallest cost. But instead we can use *Best-first search* (also called *branch and bound*). We use a priority queue to keep track of the partial solutions by cost and then explore the most promising solutions first. So similar to the Sudoku algorithm where we tried to choose the best next square. The difference here is we're judging the entire solution by some score rather than selecting a single square.
+
+But because we're not looking for a single solution, we must keep exploring partial solutions until they either beat or are beaten by the current best complete solution. We need the cost of a partial solution to be the lower bound of the complete solution for this optimization to work, otherwise a partial solution that's more expensive now might become less expensive that the current best. Essentially: cost must always increase.
+
+## 9.7 The A\* Heuristic
+The best-first search mentioned above, even with the lower bound optimization, is still extraordinarily slow for moderate search spaces.
+
+So instead of just taking the cost of the current partial solution and using that as the lower bound used to determine whether the solution should be abandoned, we instead try to extrapolate the minimum cost of the full solution from the current partial solution. If we find the lower bound for the cost of an edge in the graph, we can use that to estimate the final cost of a solution from its current partial solution. So `cost = partial solution cost + (edges left for a complete solution * minimum edge cost)`.
+
+Best-first search is sort of like breadth-first search. BFS uses more memory than DFS as it has to keep track of all partial paths, whereas DFS uses memory proportional to the height of the tree.
+
+So take home lesson:
+> The promise of a given partial solution is not just its cost, but also includes the potential cost of the remainder of the solution. A tight solution cost estimate which is still a lower bound makes best-first search much more efficient.
+
+# Chapter 10 - Dynamic Programming
+The most challenging algorithmic problems involve optimization, where we seek to find the best solution according to some objective function. Algorithms for optimization problems need to always return the best possible solution. Greedy algorithms try to make the best local decision on each iteration, so it's fast, but it doesn't always return the correct answer. Exhaustive algorithms explore every possiblity so they for sure return a correct answer, but at the cost of inefficiency.
+
+Dynamic programming combines the best of both worlds. We get to search all possibilites (correctness) but while caching any intermediate results to avoid recomputing them (efficiency).
+
+Specifically, it's a technique for efficient implementation of a recursive algorithm, where intermediate results are calculated once and stored avoiding recomputing the same subproblem over and over.
+
+Dynamic programming is often good for problem on combinatorial objects that have an inherent left-to-right order (as that has the require to recompute the same subproblems).
+
+## 10.1 Caching vs Computation
+There's obviously a space vs time trade-off here.
+
+### Fibonacci by Recursion
+Fibonacci is inherently a recursive algorithm. It therefore creates a *recursion tree*. The tree is evaluated depth-first (as are all recursive algorithms), but due to the nature of how recursive paths are generated, for fibonacci there is duplication of computation on the two sides of the recursion tree. And this duplication causes huge inefficiency. In fact it takes at least 1.6ⁿ computations - it's exponential,
+
+![](./images/fibonacci-recursion.png)
+
+### Fibonacci by Caching
+As a fibonacci calculation on a given integer is required mutliple times when calculating the fibonacci number for a larger number, we can cache the results of each `F(k)` - a technique called *memoization*.
+
+![](./images/fibonacci-cached.png)
+
+From this it's obvious it's `O(n)`A
+
+This only works for recursive algorithms that have repeated computation of subproblems. Those problems where each call has distinct parameters won't benefit from caching, like quicksort, backtracking, DFS.
+
+### Fibonacci by Dynamic Programming
+As fibonacci explictly depends on only the previous two results, we can simple calculating it via iteration while only caching the previous two values:
+
+```c
+
+long fib_dp(int n) {
+    int i; /* counter */
+    long f[MAXN+1]; /* array for caching values */
+
+    f[0] = 0;
+    f[1] = 1;
+
+    for (i = 2; i <= n; i++) {
+        f[i] = f[i-1] + f[i-2];
+    }
+
+    return(f[n]);
+}
+```
+So we've removed recursion by specifying the order of evaluation.
+
+### Binomial Coefficients
+Binomial coefficients are the integers that occur as coefficients in the binomial theorem. The binomial theorem states how to algebriacally expand the powers of a binoial. A binomial simply means the sum of two terms. So the binomial theorem states how to example `(x + y)⁴`.
+
+So the binomial coefficients descibe the coeffiecents that result from the expansion. The way they're written is `(n k)` (they should be vertically stacked but I can't do that with markdown) and it spoken "n choose k", meaning how many ways to choose k elements from n elements in an unordered set. It shows up in the binomial theorem because the expansion requires some multiple of the expanded terms. But they also show up elsewhere in math, specifically combinatorics.
+
+How do we calculate the binomial coefficients? Well the theory gives us: `(n k) = n! / (k!(n - k)!)` but it's not great for us because the intermediate terms requires a number larger than a 32 bit int even if the result is well within that range.
+
+Another way to compute it is to use the recurrence relation implicit in the construction of Pascal's triangle, which produces the binomial coefficients. So by computing pascal's triangle using efficient recursion caching, we get the binomial coefficients.
+
+## 10.2 Approximate String Matching
+We often want to search for a pattern P within a substring T allowing for slight misspelling. To do so we  must define a cost function that tells us how non-similar two strings are. A reason distance measure reflects the number of changes. There are three types of changes:
+
+1. *Substitution*: Replacing a character
+2. *Insertion*: Insert a character
+3. *Deletion*: Deleting a character
+
+We can assign each change a cost of `1`.
+
+### Edit Distance by Recursion
+To determine similarity we want to calculate the number of edits that would take the pattern P to the text T. So 1 insertion, 1 substitution, etc.
+
+We can define a recursive operation that computes this distance. We can compare the last two characters of P and T and know that a character in P vs T must have either been: matched, substituted, inserted, or deleted. For each recursion of comparing the characters Pᵢ and Tⱼ we can compare the characters, delete from the pattern or delete from the text (simulating an insertion), and compute the cost of each of those operations. The deletion and insertion operations remove a character from the substring being looked at and recursively calls itself. That way we calulate the costs of each possible substring, which then bubbles up to a single cost. We stop at i=0, j=0.
+
+We take the lowest cost of each of the operations. That way if two strings "foo" and "foo" exactly match, the path that would have compared "foo" with "fo" would be ignored.
+
+```c
+int string_compare_r(char *s, char *t, int i, int j) {
+  int k;           /* counter */
+  int opt[3];      /* cost of the three options */
+  int lowest_cost; /* lowest cost */
+
+  if (i == 0) { /* indel is the cost of an insertion or deletion */
+    return (j * indel(' '));
+  }
+
+  if (j == 0) {
+    return (i * indel(' '));
+  }
+
+  /* match is the cost of a match/substitution */
+  opt[MATCH] = string_compare_r(s, t, i - 1, j - 1) + match(s[i], t[j]);
+  opt[INSERT] = string_compare_r(s, t, i, j - 1) + indel(t[j]);
+  opt[DELETE] = string_compare_r(s, t, i - 1, j) + indel(s[i]);
+
+  lowest_cost = opt[MATCH];
+  for (k = INSERT; k <= DELETE; k++) {
+    if (opt[k] < lowest_cost) {
+      lowest_cost = opt[k];
+    }
+  }
+
+  return (lowest_cost);
+}
+```
+
+But it's really slow because each recursion branches 3 ways. So grows at least 3ⁿ.
+
+### Edit Distance by Dynamic Programming
+We can define a matrix to store the cached cost for a given `i` and `j`, along with the parent cell that generated the given cost. We can use the parent to get the path of operations that led to the given cost.
+
+The solutions to a dynamic programming problem are given by paths through the dynamic programming matrix. So walking this matrix allows us to build the solution that provided the optimal solution.
+
+Here's the full function in C:
+
+```c
+int string_compare(char *s, char *t, cell m[MAXLEN + 1][MAXLEN + 1]) {
+  int i, j, k; /* counters */
+  int opt[3];  /* cost of the three options */
+
+  for (i = 0; i <= MAXLEN; i++) {
+    row_init(i, m);
+    column_init(i, m);
+  }
+
+  for (i = 1; i < strlen(s); i++) {
+    for (j = 1; j < strlen(t); j++) {
+      opt[MATCH] = m[i - 1][j - 1].cost + match(s[i], t[j]);
+      opt[INSERT] = m[i][j - 1].cost + indel(t[j]);
+      opt[DELETE] = m[i - 1][j].cost + indel(s[i]);
+
+      m[i][j].cost = opt[MATCH];
+      m[i][j].parent = MATCH;
+
+      for (k = INSERT; k <= DELETE; k++) {
+        if (opt[k] < m[i][j].cost) {
+          m[i][j].cost = opt[k];
+          m[i][j].parent = k;
+        }
+      }
+    }
+  }
+
+  goal_cell(s, t, &i, &j);
+  return (m[i][j].cost);
+}
+
+
+row_init(int i) {
+  m[0][i].cost = i;
+  if (i>0)
+     m[0][i].parent =  INSERT;
+  else
+     m[0][i].parent = -1;
+}
+}
+
+column_init(int i) {
+  m[i][0].cost = i;
+  if (i>0)
+     m[i][0].parent = DELETE;
+  else
+     m[i][0].parent = -1;
+}
+
+
+
+void goal_cell(char *s, char *t, int *i, int *j) {
+    *i = strlen(s) - 1;
+    *j = strlen(t) - 1;
+}
+```
+
+Functions we need:
+1. `[row|column]_init`: We need to populate the matrix with something for that initial recursion. We can do so by taking the known cases (e.g. comparing the zero string with T: it's 5 insertions) and filling in the zeroth row and column.
+2. `match`: We need to define functions to provide a cost for a given operation. Easy enoough.
+3. `goal_cell`: We need a way to know the endpoint of a solution. This function returns the indices of the cell marking the endpoint. For edit distance, this is defined by the length of the two input strings.
+
+By having these general functions, we can do minor edits to them to solve other problems:
+1. *Substring matching*: In order to find where in a string a given pattern occurs, we can adapt the string compare algorithm by changing it so that matching in the middle of the text isn't punished (without that it would be punished by a bunch of deletions before getting to the match). In other words: we want the edit distance to be independent of the position in the text. That requires two changes: the first is to make the initial row in the matrix set to zero cost, and the second is to update `goal_cell` so it returns the solution with the least cost anywhere in the string.
+
+```c
+void row_init(int i, cell m[MAXLEN+1][MAXLEN+1]) {
+    m[0][i].cost = 0; /* NOTE CHANGE */
+    m[0][i].parent = -1; /* NOTE CHANGE */
+}
+
+void goal_cell(char *s, char *t, int *i, int *j) {
+  int k; /* counter */
+
+  *i = strlen(s) - 1;
+  *j = 0;
+
+  for (k = 1; k < strlen(t); k++) {
+    if (m[*i][k].cost < m[*i][*j].cost) {
+      *j = k;
+    }
+  }
+}
+```
+2. *Longest common subsequence*: For two strings, what is the longest subsequence shared between them? We can determine that by changing `match` so that it only allows substitutions of non-matching characters. That forces it to use insertion and deletion, guaranteeing the matches found are the original matches.
+
+Generally we should learn to recognise when problems are a special case of approximate string matching, and then adapt the generic functions accordingly.
+
+## 10.3 Longest Increasing Subsequence
+There are three steps to use dynamic programming:
+1. Formulate the answer you want as a recurrence relation or recursive algorithm
+2. Show the recurrence relation takes parameters bounded by a small polynomial (so it can be cached)
+3. Give an evaluation order so cached partial results are there when you need them
+
+The author goes through the example of finding the *maximum monotone subsequence* - basically just the longest subsequence where each element increases. This is different to a run, where the increase must be 1 per element. Here the sequence can skip decreasing values.
+
+So the first step is to define the recurrence relation. The easiest way to think about it is to take the subset `s' = {s₁, ..., sn-1}` of `s = {s₁, ..., sn}` and determine what would enable to use that subset to determine the length of the max increases sequence of the entire set. Well we can see that the last element `sn` will only increase the length of the max subsequence if it's larger that the last element of the subsequence. But in order to know the longest sequence that uses `sn`, we really need to know the length of the max subsequence of each element preceeding `sn`.
+
+So this defines our recurrence relation: the longest increasing sequence containing `sn` is formed by appending it to the longest increasing sequence to the left of `n` that ends on a smaller number than `sn`. If we apply this recursively using dynamic programming we can see how that would spit out the longest subsequence. In order to build the chain that gave the longest subsequence, we'll need to store the *predecessor*.
+
+## 10.5 Unordered Partition or Subset Sum
+The *knapsack* or *subset sum* problem asks whether there exists a subset of a given set of positive integers that adds up to a given target `k`.
+
+So again to solve this using dynamic programming we need to determine its recurrence relation. Again the way to do this is to ask what the subset up to `sn - 1` would need to tell us in order to determine whether `sn` should be included. Easy enough: either it's a part of it or not. If it is, then there must be a way to make the subset proceeding `sn` add up to `k - sn`. If not, then the solution does not use `sn`.
+
+So the recurrence is defined by eveluating the proceeding sum to determine if the current element is included or not.
+
+Note: not going to include all the code here. The key is just to know how to use the recurrence relation to build out the dynamic programming algorithm.
+
+## 10.7 The Ordered Partition Problem
+The ordered partition problem asks how to partition an arrangement `S` into `k` fewer ranges that minimizes the maxmium sum over all the ranges, without reordering any of the numbers. Essentially: how do we partition such that each partition is fairly equal?
+
+The novice instinct might suggest finding the average weight of a partition and then doing your best to insert the dividers such that each partition approximated that average weight. But any such heuristic method will fail on certain inputs.
+
+Instead we can use a recursive, exhaustive approach. It's easy to see why:
+1. Any divider `k` must start immediately after the `k - 1`st divider (e.g. 1 2 | 3 4 - the divider ends at 2 and startrs at 3).
+2. Let's see this is the last divider, where do we place it? Say it's between some `i` and `i + 1` elements. That means the cost after the insertion is the right plus the left costs after the partition. If this is the last divider, the cost of the last partition is clear: it's the sum of `S(і + 1)` up to `Sn`. What's the cost of the left partition?
+3. Well we have `k - 2` remaining dividers to partition to the space and we want to do that in a way that minimizes each partition. This is just a smaller instance of the same problem (of where to place a divider) and so it can be solved recursively.
+
+So essentially the recurrence relation is defined as the minimum possible cost of all partitions of `S` into `k` ranges, where the cost of a partition is the largest sum of elements in one of its parts. So in order to to compute this we keep subdividing to get the sum of the largest part until that part is just a single element. The dynamic programming approach just builds up this sub part costs via a matrix.
+
+After we've figured out this recurrence relation, we need to define the boundary conditions. It's obvious: it's when we get down to a partition of size `n=1`.
+
+The time complexity of this pans out to be `O(kn³)`. But with some caching of partial parts, we get it to `O(kn²)`.
+
+Again, like with the other examples, we can store auxillary information to reconstruct the partition used to minimize cost.
+
+## 10.8 Parsing Context-Free Grammars
+Context-free grammers are precise descriptions of language syntax that can be used to determine whether a given expression is legal for a given programming language. With the grammar, a *rule* or *production* defines an interpretation of a named symbol on the left side of a rule as a sequence of symbols on the right side of the rule. The right side can be a combination of *nonterminals* (defined by more rules) or *terminals* (don't break down any further).
+
+Parsing a given text string according to this grammer involves breaking it down according to these rules into a *parse tree* of rule substitutions that take us from that raw string to terminals. By now it should be obvious that this is a clear recursive problem and so dynamic programming is approriate.
+
+The recurrence relation is simple: a symbol X is defined on the right side by either a) two nonterminal symbols `X -> YZ` or b) a single terminal symbol `X -> a`.
+
+So we can use the dynamic programming approach: start at the root of the parse tree, keeping track of each of the noterminals generated by each contiguous subsequence of our string `S`. The boundary conditions are when the sequence breaks into a single terminal symbol.
+
+The cost is `O(n³)`.
+
+This method can be extended to give the edit distance of two strings based on the rules of the grammar.
+
+> Take-Home Lesson: For optimization problems on left-to-right objects, such as characters in a string, elements of a permutation, points around a polygon, or leaves in a search tree, dynamic programming likely leads to an efficient algorithm to find the optimal solution.
+
+## 10.9 Limits of Dynamic Programming
+Dynamic programming requires the problem to object the *principle of optimality*. Simply put: partial solutions must be able to be optimally extended given the *state* after the partial solution, instead of the specifics of the partial solution itself. Essentially due to the nature of the recursion used, we can't know anything about how we got to a particular state (the path we took to get to a given vert on a graph for example), just that given that current state, we know how to advance it in a way to get the optimial next step.
+
+We based future decisions based on the *consequences* of previous decisions, not the actual decisions themselves. Problems that can't be solved with dynamic programming are those that require knowledge of the specific operations not just the cost of those operations.
+
+For example, a specific case of edit distance where only specific operations done in a particular order were allowed would not be solvable with dynamic programming.
+
+Regarding the efficiency of dynamic programming, it all depends on the input objects having an inherent left-to-right ordering. Without that we're forced to evaluate all possible orderings of the input objects, which rapidly increases the required spaced to the point of making it impossible to run the program.
+
+Generally the runtime is dependent on 1) the number of partial solutions to keep track of and 2) how long it takes to evaluate each partial solution. The number of partial solutions is usually bounded by the implicit order of the elements. Without it, we get a huge size of state space.
+
+# Chapter 11 - NP-Completeness
+This chapter introduces techniques that can be used to show no efficient algorithm exists for a given problem. It might seem a waste of time to do this, but it allows us to focus on problems that are actually solvable efficiently. Without this we would be wasting time trying to solve unsolvable problems. NP-Completeness gives us a language which we can use to express the "hardness" of a problem and what specifically makes it hard.
+
+The key idea to this all is *reduction*: showing by reducing two seemingly unrelated problems that they are actually the same problem and what a solution to one problem, or lackthereof, tells us about another problem.
+
+## 11.1 Problems and Reductions
+A *reduction* between two problems can be thought of as a *translation* between the two problems. In order to determine "hardness" we need some external standard that can be used to measure it. With that we can then reduce other problems into the same problem and prove hardness by deduction.
+
+E.g If A fights B, then B fights C, what does that really tell us about the "toughness" of any of them? Not much. But if we knew that C was actually a UFC world champion, well then we can know a lot more about A and B  and their toughness.
+
+Reductions are algorithms that convert one problem into another. To do so we need to be rigorous in our definitions:
+1. *Problem*: a general question with parameters for input and conditions for what constitutes a satisfactory answer.
+2. *Instance*: a problem with specified input parameters.
+
+### The Key Idea
+```
+Bandersnatch(G)
+  Translate the input G to an instance Y of the Bo-billy problem.
+  Call the subroutine Bo-billy to solve instance Y .
+  Return the answer of Bo-billy(Y) as the answer to Bandersnatch(G).
+```
+This will solve the Bandersnatch problem assumes the translation preserves the correctness of the answer. If it does, then:
+
+```
+Bandersnatch(G) = Bo-billy(Y)
+```
+
+Let's say that the reduction from G to Y takes `O(P(n))`. Then:
+1. If Bo-Billy takes `O(P'(n))`, then this gives us an algorithm that's `O(P(n) + P'(n))`.
+2. If I know that `Ω(P'(n))` is the lower bound on Bandersnatch, then Bo-Billy must have a lower bound of `Ω(P'(n) - P(n))` because the reduction above would not hold if they weren't equal complexity. (the subtraction here is to account for the cost of conversion). So if two problems are reducable to each other, they must have shared time complexity.
+
+### Decision Problems
+Reductions translate problems so that their answers are identical in every problem instance. Problems can have different ranges or types of possible answers, so in order to translate two problems, there needs to be a shared restriction of possible answers.
+
+Decision problems are those who's answers are restricted to true or false. For the rest of the chapter, we'll often consider decision problems as they simplify the discussion while retaining their ability to demonstrate NP-Completeness.
+
+## 11.2 Reductions for Algorithms
+Reductions allow us to translate the input for a problem into the input of another problem we already know how to solve. Let's look at several such reductions.
+
+### Closest Pair
+Closest pair asks for the closest two numbers within a set. We can reduce this to a decision problem by asking if there exists a pair whose difference is less than some threshold:
+
+*Input*: A set S of n numbers, and threshold t.
+*Output*: Is there a pair `si,sj ∈ S` such that `|si−sj| ≤ t`?
+
+Reducing the problem to a decision problem gives us the following algorithm:
+
+```
+CloseEnoughPair(S,t)
+    Sort S.
+    Is min1≤i<n |si+1 − si| ≤ t?
+```
+1. This decision version still captures what's interesting about the general problem, so it's no easier than finding the actual closest pair.
+2. The complexity depends on sorting, so it's `Ω(nlogn)`.
+3. But even though it's `Ω(nlogn)` in the worst-case as a decision problem does not mean that it's the same worst-case as a closest-pair problem.
+4. But if we actually knew that the close-enough pair required `Ω(nlogn)`, then we would know that no algorithm for sorting can be better than `Ω(nlogn)` as that would imply there was a faster version of this close-enough algorithm. Essentially we reduced it to a sorting problem and that tells us what we can expect in complexity.
+
+### Longest Increasing Subsequence
+We earlier modelled the longest increasing subsequence problem as a version of edit distance. We simply made the cost of substitution infinite such that it would never happen, which would therefore always return the longest common subsequence between them and delete everything else:
+
+```
+LongestIncreasingSubsequence(S)
+    T = Sort(S)
+    cins = cdel = 1
+    csub = ∞
+    Return (|S|− EditDistance(S,T,cins,cdel,csub)/2)
+```
+
+In order to reduce the problem to the edit distance problem, we first have to sort, so the cost of reduction is `O(nlogn)`. We then have to do edit distance, which is `O(|S| · |T|)`, essentially quadratic. But LIS actually has a `O(nlogn)` algorithm, so this reduction gives us a simple algorithm but not an optimal one.
+
+### Least Common Multiple
+*least common multiple* (lcm) and *greatest common divisor* (gcd) problems arise when dealing with integers. We say *b divides a* (`b | a`) if there exists an integer *d* such that `a = bd`.
+
+The two problems could solved easily after reducing `a` and `b` to their prime factorizations. Unfortunately no efficient algorithm is known for factoring integers. But fortunately Euclid gave an efficeint algorithm for solving the greatest common divisor. It's a recursive algorithm that uses a couple observations that I won't bother listing.
+
+But essentially Euclid's algorithm coupled with another observation that relates gcd and lcm, we can solve LCM in terms of GCD:
+
+```
+LeastCommonMultiple(x,y)
+    Return (xy/gcd(x, y)).
+```
+
+## 11.3 Elementary Hardness Reductions
+The previous section demonstrated reductions between pairs of problems for which efficient algorithms exist. But with NP-Completeness we're actually interested in using reductions to prove hardness.
+
+The author wants us to take it as fact that a *Hamiltonian cycle* and *vertex cover* are hard problems.
+
+### Hamiltonian Cycle
+This is a famous problem in graph theory. It seeks a tour that visits each vertex exactly once. Obviously it's similar to the traveling salesman problem, with the differences that the Hamiltonian is on an unweighted graph and TSP weighted, but due to their similarities we can properly reduce:
+
+```
+HamiltonianCycle(G = (V, E))
+    Construct a complete weighted graph G′ = (V ′, E′) where V ′ = V .
+    n = |V |
+    for i = 1 to n do
+      for j = 1 to n do
+        if (i,j) ∈ E then w(i,j) = 1 else w(i,j) = 2
+```
+This shows that a fast algorithm for TSP would imply a fast algorithm for Hamiltonian cycle, while a hardness proof for Hamiltonian cycle would imply that TSP is hard. Since the latter is the case, it shows that TSP is hard and at least as hard as Hamiltonian cycle.
+
+### Vertex Cover and Independent Sets
+1. Vertex cover seeks a small set of verts that touch every edge in a graph.
+2. A set of verts S of graph G is *independent* if there are no edges (x,y) where both x ∈ S and y ∈ S. So no edges between any two verts in an independent set.
+
+Both of these problems are alike and in fact can be reduced. If S is a vertex cover of G, then the remaining verts V - S must form an independent set, as otherwise there would be remaining edges that would mean S was not a full vertex cover (which has to include all edges in the graph). So because of that:
+
+```
+VertexCover(G, k)
+    G′ = G
+    k′ =|V|−k
+    Return the answer to IndependentSet(G′, k′)
+```
+This shows the hardness of vertex cover implies that the independent set must also be hard. It's easy to reverse this reduction showing that the problems are as hard as each other.
+
+**Notice how reduction doesn't require knowing the answer, just the inputs.**
+
+
+### Clique
+A clique in a friendship group is where everyone in the group knows each other. Let's look at the problem of asking whether a friendship graph has a clique of `k` verts.
+
+We can consider this the opposite of the independent set problem, as it requires that all verts share an edge rather than none of them. So because of this we can actually reduce the clique problem into the independent set problem by simply flipping the roles of edges and non-edges in the graph, known as *complementing*:
+
+```
+IndependentSet(G, k)
+    Construct a graph G′ =(V′,E′) where V′ = V, and
+        For all (i,j) ̸∈ E, add (i,j) to E′
+    Return Clique(G′, k)
+```
+So this forms a chain: clique -> independent set -> vertex cover. So the hardness of clique is implied by independent set which is implied by vertex cover. The work of chaining is complete once we arrive at a problem that can be accepted as hard. Satisfiability is the problem needed for this first link in the chain.
+
+## 11.4 Satisfiability
+In order for this chaining to work, we must start with a problem that is undeniably hard to compute. The of all NP-complete problems is a logic problem named *satisfiability*.
+
+*Problem*: Satisfiability (SAT)
+*Input*: A set of Boolean variables V and a set of logic clauses C over V .
+*Output*: Does there exist a satisfying truth assignment for C — in other words, a way to set each of the variables {v1, ... , vn} either true or false so that every clause contains at least one true literal?
+
+Essentially, given a set of logical clauses involving some set of variables, are all clauses satisified? Given the set of variables we can of course verify whether that's true. But can we come up with an algorithm that solves for the problem not just an instance of the problem?
+
+Well we've attempted to come up with a polynomial time algorithm that can verify whether a set of clauses are generally satisifiable, but none has ever been discovered, in spite of nearly everyone trying. We therefore consider it a "hard" problem.
+
+So if we can prove that a given algorithm is as hard as satisfiability, then we know it too is "hard".
+
+### 3-Satisfiability
+Just because a problem is hard in its worst-case, doesn't mean it's hard in all cases. Indeed with satisfiability we can see that if two clauses within the set of clauses contain single literal (`not a` for example) directly contradict each other, we can determine satisfiability.
+
+So the question is how many literals per clause do we need to turn it from polynomial to hard? It turns out it's 3.
+
+We can show that 3-SAT is hard, and because we can also reduce any general satisfiability problem (4-SAT, 5-SAT, K-SAT where k >= 3) into a 3-SAT problem, we can see all problems involving 3 or more clauses are "hard". Without that it could be conceivable that the hardness of general satisfiability depended on some long clause.
+
+We can also show that 2-SAT can be solved in linear time uses BFS.
+
+## 11.5 Creative Reductions from SAT
+So because we know that SAT and 3-SAT are hard, we can use either of them in future reductions. We tend to use 3-SAT due to it being simpler to work with. This allows us to increase our collection of known hard problems.
+
+Quoting directly from the book as it's important:
+
+> One perpetual point of confusion is getting the direction of the reduction right. Recall that we must transform any instance of a known NP-complete problem (Bandersnatch) into an instance of the problem we are really interested in (Bo-billy). If we perform the reduction the other way, all we get is a slow way to solve the problem of interest, by using a subroutine that takes exponential time. This always is confusing at first, because it seems backwards. Make sure you understand the direction of reduction now, and think back to this whenever you get confused.
+
+So essentially we need to rewrite the problem we want to prove as hard in terms of 3-SAT.
+
+### Vertex Cover
+As we need to formulate the problem of vertex cover in terms of 3-SAT, we need to essentially "program" a graph and it's bound `k` in terms of 3 clauses and their variables.
+
+It's complex and honestly not worth me knowing in detail, but in general the key is that we're using the variables and their clauses to construct the graph and do so in a way that ensures that any satisfication of the clauses would provide a full vertex cover.
+
+With 3-SAT and therefore vertex cover, integer partition and hamiltonian cycle, we can prove the hardness of most other hard problems.
+
+### Integer Programming
+Integer programming is a fundamental combinatorial optimization problem. It's essentially linear pgoramming with the variables restricted to take only integer (instead of real) values. Stated:
+
+```
+Problem: Integer Programming (IP)
+Input: A set of integer variables V , a set of linear inequalities over V , a linear maximization function f(V ), and an integer B.
+Output: Does there exist an assignment of integers to V such that all inequalities are true and f(V ) ≥ B?
+```
+So it's defining a a set of inequalities over a set of variables, a function over the variables, and another integer. Then the problem asks whether there are a set of variables that satisfy the inequalities and the function.
+
+It can be shown that 3-SAT can be reduced to this problem and thus integer programming is hard. Again not going into detail, it's far too much for this stage.
+
+## 11.6 The Art of Proving Hardness
+Proving that problems are hard is a skill. But it turns out generally proving NP-completeness is easier than explaining them. SOrt of like how rewriting code can be easier than understanding its behaviour.
+
+Generally we should just look up a given problem to see if it has already been proven to be hard. But here are some general tips for doing it manually:
+1. Restrict the problem as much as possible and use 3-SAT. It's much easier to reduce 3-SAT into a restricted hard problem than general satisfiability into a widely defined hard problem.
+2. Make your target problem as hard as possible. Then simplifying to the an easier problem is easy.
+3. Select the right source problem for the right reason. It's tempting to fish around for various known hard problems when trying to prove another problem's hardness. But it's better to choose from only a small set, 4 in the author's case: 3-SAT (when the other 3 don't work), integer partition (when the problem seems to require large numbers), vertex cover (for any graph problem that requires selection), hamiltonian path (for graph problems that depend upon ordering).
+4. Amplify the penalties for making the undesired selection. In other words make it so that when the algorithm fails, it does so in an obvious way, e.g. "if you select this element, then you must pick up this huge set that blocks you from finding an optimal solution".
+5. Think strategically at a high level, then build gadgets to enforce tactics. So e.g. How can i force that A or B is chosen but not both?
+6. If you get stuck, look for an algorithm. Sometimes you can get stuck proving hardness when an actual efficient algorithm exists to solve your problem.
+
+## 11.9 P vs NP
+The primary question in P vs NP is whether *verification* is really an easier task that initial *discovery*.
+
+This is obviously true for the hard problems discussed so far:
+1. It's easy to verify a TSP tour but not to find it.
+2. Verifying a truth assignment represents a solution to a given satisfiability problem is easy: just plug them in an evaluate the clauses.
+3. Verifying a k-vertex subset of S is a vertex cover of graph G is easy: just traverse the edges.
+
+But the problem is that we have no lower bound *proof* that prevents the existing of fast algorithms to solve these problems. Perhaps we're too blind to see them.
+
+### The Classes P and NP
+Class P = algorithm problems **solvable** in *polynomial time*. So in other words, most of the algorithms in this book that have a Big Oh worst-case.
+
+The less exclusive club, NP (not necessarily polynomial time), are those algorithms that can be **verified** in polynomial time. 3-SAT, vertex cover, etc can all be verified in polynomial time, but cannot be solved in polynomial time.
+
+Obviously all P problems are NP problems. But the big question is whether there are problems in NP that are not member of P. So are there truly algorithms that are only verifiable in polynomial time but NOT ever solvable in polynomial time. If so P != NP. Otherwise P = NP.
+
+Most people think that P != NP, but we need a proper proof. No one has one.
+
+There exists a super-reduction called *Cook's theorem* that reduces all the problems in NP to satisfiability. it shows that satisfiability is as hard as any problem in NP, and thus all NP-complete problems are as hard as each other. Thus, if we prove that there exists a polynomial solution to satisfiability, then we P = NP. This would be huge.
+
+Our inability to find a fast algorithm for any NP-complete problem strongly suggest P != NP.
+
+Final thing: NP-hard vs NP-complete. NP-hard means that its at least as hard as any problem in NP. We say NP-compelte if it's as hard as any problem in NP (meaning it can be reduced from 3-SAT) and is actually in NP (it can be verified in polynomial time). There are problems that are NP-hard (at least as hard as 3-SAT) but are not in NP (not verifiable in polynomial time).
+
+An example is from chess. If someone moves their first piece and says checkmate, full verification would require constructing the full tree of possible moves and verify one of them does or does not cause checkmate. This tree will have nodes exponential in its height (the number of moves before you lose) clearly cannot be constructed and analyzed in polynomial time, so the problem is not in NP.
