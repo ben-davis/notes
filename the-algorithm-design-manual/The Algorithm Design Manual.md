@@ -2237,7 +2237,7 @@ Backtracking is a systematic way to run through all the possible configurations 
 1. All possible arrangements of objects (permutations)
 2. All possible ways of building a collection of them (subsets)
 
-Other examples: all spanning trees of a graph, all paths between two verst, all possible ways to partition verts into color classes.
+Other examples: all spanning trees of a graph, all paths between two verts, all possible ways to partition verts into color classes.
 
 What all of these have in common is the need to generate each possible configuration *exactly once*, which requires that we define a systematic generation order.
 
@@ -2919,3 +2919,277 @@ Our inability to find a fast algorithm for any NP-complete problem strongly sugg
 Final thing: NP-hard vs NP-complete. NP-hard means that its at least as hard as any problem in NP. We say NP-compelte if it's as hard as any problem in NP (meaning it can be reduced from 3-SAT) and is actually in NP (it can be verified in polynomial time). There are problems that are NP-hard (at least as hard as 3-SAT) but are not in NP (not verifiable in polynomial time).
 
 An example is from chess. If someone moves their first piece and says checkmate, full verification would require constructing the full tree of possible moves and verify one of them does or does not cause checkmate. This tree will have nodes exponential in its height (the number of moves before you lose) clearly cannot be constructed and analyzed in polynomial time, so the problem is not in NP.
+
+# Chapter 12 - Dealing with Hard Problems
+Even if we have a problem we prove or know to be NP-complete, presumably we still want to solve the problem in some way. Well for that there are 3 types of solutions we can reach for:
+1. *Algorithms for the fast-case*: E.g. Backtracking with search pruning.
+2. *Heuristics*: E.g. simulated annealing (probabilistic technique to estimate some global optimization of a search space) or greedy approaches that quickly find a solution, but no guarantee of correctness.
+3. *Approximation algorithms*: NP-completeness stipulates that it's hard to get an *exact* answer. But with clever, problem-specific heuristics, we can get provably *close* to the optimal answer for all problem instances.
+
+## 12.1 Approximation Algorithms
+Approximation algorithms are efficient algorithms that provide approximate solutions to hard optimization problems with mathematically provable guarantees on the distance to the optimal solution.
+
+Sometimes though it's possible for a heuristic (no guarantees) to actually provide a better solution. So sometimes it's possible to use both an approximation and a heuristic and use whichever produces the better answer.
+
+## 12.2 Approximating Vertex Cover
+We know that finding the *minimum* vertex cover is NP-complete, but there's a very simple method that always finds a cover that is at most twice as large as the optimal:
+
+```
+VertexCover(G = (V, E))
+  While (E ̸= ∅) do:
+    Select an arbitrary edge (u, v) ∈ E
+    Add both u and v to the vertex cover
+    Delete all edges from E that are incident to either u or v.
+```
+The reason the optimal solution has half the verts: here we're selecting both verts for a given edge.
+
+Some things to note:
+1. *It's simple, not stupid*: Why not select a single vert? Well apparently it's possible that would return `n - 1` verts in the worst case; worse than this algo.
+2. *Greedy isn't always the answer*: Similar with greedy. E.g. a heuristic that would select the vertex with the highest degree. Again it can go wrong in the worst-case.
+3. *A more complicated heuristic isn't necessarily better*: E.g. we could add some smartness about edge selection but apparently that doesn't improve the worst-case and just makes the algo more difficult to analyze.
+4. *Post-processing is useful*: E.g. we could just have an extra step to remove any unnecessary vertices without changing the algo's worst-case.
+
+
+Another interesting approximation: the non-leaf nodes in a DFS tree created during DFS is a vertex cover. 
+
+### A Randomized Vertex Cover Heuristic
+The idea of only choosing a single vert when we randomly select an edge is good, but it falls down in practice due to awful worst-case. But in order to hit that worst-case we have to get unlucky a bunch of times. What have we seen before than can offset this bad luck? Randomization. If we randomly select which vert to choose when we randomly select our edge, we actually make it much more difficult to hit that worst-case.
+
+## 12.3 Euclidean TSP
+For the most part, in a TSP direct routes are inherently shorted than indirect routes. As the crow flies is just faster. Specifically this is the case when the TSP involves Euclidean geometry. Within Euclidean geometry, any three vertices will satisfy the *triangle inequality*: the distance between `a -> c` is less than `a -> b -> c`.
+
+TSP is hard when the edge weights are defined by Euclidean distances between points. But we can approximate graphs that obey the triangle inequality using minimum spanning trees.
+
+TSP tours have no cycles so are therefore trees. Distances are also non-negative, so removing an edge from the tour leaves a path with a weight no greater than the original tour. This means that the minimum spanning tree must be a lower bound on the optimal tour.
+
+So we can use a DFS with some extra work to remove duplicate vertices and get a solution to TSP on `O(n + m)`, which has a weight at most twice that the of the optimal tour.
+
+### The Christofides Heuristic
+This is quite complex so don't expect a solid explanation. A Eulerian cycle is a circuit that traverses each edge of a graph exactly once. A eulerian cycle requires each vertex to have an even degree as we need to have the same number of ways to get to a vert as there are to leave it (otherwise we'd get stuck). A eulerian cycle has exactly the same properties as a DFS circuit.
+
+So the question is can we construct a eulerian cycle from our graph? Turns out you can. But first you need to alter the graph so that each vertex has even degree. To do that we can find a *matching* of the graph for all odd vertices and add it to the original graph (the result being a *multigraph*). The resulting graph is Eulerian and so we can therefore find a Eulerian circuit to get our TSP approximation.
+
+The overall algorithm then needs to find the minimum spanning tree of G plus the minimum weight set of matching edges between odd-degree vertices in this tree.
+
+I can't give a good explanation for this, but the important point is that the Eulerian cycle provides a better approximation than the minimum spanning tree.
+
+## 12.4 When Average is Good Enough
+### Maximum K-SAT
+A more general problem of 3-SAT is the *maximum* 3-SAT, where we seek the boolean variable assignment that makes the largest number of the clauses true. It's still hard, bt now we have an optimization problem, so we can think about approximation algorithms for it.
+
+Apparentlt just randomly assigning values can actually be a pretty good approximate.
+
+### Maximum Acyclic Subgraph
+Sometimes it's useful to simplify a graph to make it acyclic. How can we do so in the simplest way possible?
+
+If we construct any permuation of the vertices and intepret it as left-to-right ordering (similar to topoligcal sorting), then we will have split the graph in two: one subset of edges going left to right, and the other going right to left. One of thes sets must be bigger than the other and one of them must be ayclic (as the go in one direction). So we just take that larger subset and we're done.
+
+## 12.5 Set Cover
+The previous sections all gave algorithms that approximated the optimal answer within some constant factor. But that's not the case for all problems. Some problems you can't approximate within any interesting factor. An approximation algorithm for set cover is somehwere in the middle: it's `Θ(lg n)`.
+
+Set cover is a general version of vertex cover. The universal set is some set of elements `{1, ..., n}`. A collection of subsets `S` each of which contains elements from the universal set and for which the union of all sets in `S` is the universal set. The set cover problems asks which is the smallest subcollection of `S` who's union is still the universal set.
+
+There exists a greedy heuristic that can solve the problem fairly well:
+
+```
+SetCover(S)
+  While (U ̸= ∅) do:
+    Identify the subset Si with the largest intersection with U Select Si for the set cover
+    U = U − Si
+```
+With this is possible to find solutions that are `Ω(lg n)` times optimal.
+
+## 12.6 Heuristic Search Methods
+Backtracking is a method that can find the *best* of all possible solutions, as scored by a given objective function. But obviously evaluating every possiblilty is untenable for large values. So heuristic search methods give an alternative method to these hard combinatorial optimization problems.
+
+We'll look at three: random sampling, gradient descent search, and simulated annealing. All there share two components:
+1. *Solution candidate representation*: A way to store all possible solutions for the problem. So for TSP it's `(n - 1)!`: all possible permutations of the verts. 
+2. *Cost function*: A way to assess the quality of a possible solution.
+
+### Random Sampling
+Pretty simple: we search the solution space using random sampling (known as the *Monte Carlo method*) and stop once the cost is good enough (or we get tired of waiting).
+
+It's important that we randomly select from the solution space *uniformly*, meaning any randomly chosen solution has equal probability of being the best candidate selected.
+
+When is it a good idea to use?
+1. Any time there's a good chance of finding the optimal solution randomly. Finding primes is a good one. Roughly one out of every `ln(n)` ints is prime, so we don't need that many random samples to find one several hundred digits long.
+2. When there is no coherence in the solution space. So when there's no way to determine when we're getting *closer* to a solution, so our only hope is to just randomly select. Primes are randomly scattered so random sampling is good a solution as any.
+
+Random sampling for TSP is pretty bad as the solution space is filled with mediocre solutions. Most problems tend to have a highly coherent solution space and relatively few good solutions.
+
+### Local Search
+Local search only scans the neighbourhood around elements in the solution space. If we consider a given solution as a vertex on a graph, then the local search considers solutions that have an edge to that vertex.
+
+We can't generate an actual graph from the solution space. For TSP the solution space is huge, so it'd be highly inefficient. Instead we need a general transition mechanism that modifies the current solution slightly.
+
+The benefit of this is that the cost function only needs to be done partially on the modified solution. In fact it's proportional to the size of the change.
+
+The problem with local search (and other related heuristics like hill climbing and greedy search) is arriving at a local maximum (or minimum).
+
+When to use?
+1. *When there is great coherence in the solution space*: Hill climbing works great if there's a single hill. Many natural problems have this property, e.g. starting the middle of a binary search tree.
+2. *Whenever the work of calculating the cost of a partial solution is smaller than a global solution*: E.g. if it takes `O(n)` to evaluate the cost of a TSP tour, but only `O(1)` if the solution has only changed by a single vertex.
+
+The main negative: if we hit a local optimum there's not much we can do.
+
+### Simulated Annealing
+Simulated annealing, unlike local search, allows for occasional modifications that actually increase the cost of a solution. This allows us to be less likely to get stuck in a local optimum. It takes inspiration from te physical process of cooling molten metals: when the energy state of a system is cooling, some partictles randomly jump to a higher energy state, which helps it get to it's mimnimum energy state. Random jumps are more likely at higher energy points.
+
+For the algorithm, like the physical process, we want to allow more random jumps at the beginning of the search to quickly explore the solution space. Various parameters to the algorithm control the intitial "temperature" (which governs the randomness), functions to decrement temp, how many iterations between lowering the temp, acceptance criteria for how to accept a "good" transition, and stop criteria for when the current solution should be considered the best.
+
+#### Applications of Simulated Annealing
+1. *Maximum cut*: This seeks to partition a graph into two sets to maximize the edges (either by weight or number) between the sets. E.g. the max data rate in a circuit. The space is all possible vert partitions and the cost is the sum of weights of the current config. Each transition just flips a vert from one set to another.
+2. *Independent set*: An independent set is a subset of verts such that there is no edge with both ends in that set. The space is all subset of verts, the transition is just a single vert change, and the cost is the number of edges in the set.
+3. *Circuit board placement*: How to place modules and wires to maximize data rate.
+
+## 12.9 Genetic Algorithms and Other Heuristics
+Many heuristic search methods, like simulated annealing, rely on analogies to real-world process: including genetic algorithms, neural networks, and ant colony optimization.
+
+Generally the author considers these not good. They add restrictive complexity with no measurable gain in performance, in fact that can be far less efficient.
+
+Genetic algorithms create new candidation solutions by "reproducing" a solution from two parents and then pruning those solutions not "fit enough". It's similar to simulated annealing, but with a more restrictive solution mutation strategy. Often these new candidate solutions, because they make no use of problem-specific structures, produce inferior candidate solution and so take a long time to converge (the analogy of millions of years eveolution is good here).
+
+## 12.10 Quantum Computing
+The state of traditional machines is determined by the `n` bits of memory. We can think of the current state of the machine as a probability distribution over its state, so that the probability of the machine state being `i` is equal to `2^n - 1`. The probability distribution can only be in a single state at any time.
+
+Quantum computers exploit quantum mechanics so that the probability distribution of its *qubits* is much richer; its possible that the machine is in all possible states at one time. Being able to manipulate this probability distribution for all states `N = 2^n` is the real win of quantum computing.
+
+The operations of a quantum computer:
+1. *Initialize-state*: Inits the probability distribution of the n qubits based on some probabilit description (.e.g set all probabilities to be equal). The complexity is `O(D)`, where `D` is the description.
+2. *Quantum-gate*: Akin to a logic gate for for qubits. Typically this is `O(1)`.
+3. *Jack*: Increase the probabilities of all states defined by a condition. Typically `O(1)`.
+4. *Sample*: Select exactly on of the N states as per the current probability distribution. Takes `O(n)`.
+
+Quantum algorithms are sequences of these operations.
+
+### Database Search
+A search algorithm that is able to find an answer in `O(sqrt(N))` vs traditional `O(N)`.
+
+For every state of the qubits, we assign a key of size `m` qubits. So each entry in our DB can be `n + m`. We init the state so that any `n + m` qubit state has the probability (1/2)^n and the rest has zero probability. Then we proceed with the algorithm:
+
+```
+Init so that all 
+
+Search(Q,S)
+  Repeat
+    Jack(Q,“all strings where S = qn . . . qn+m−1”)
+  Until probability of success is high enough
+  Return the first n bits of Sample(Q)
+```
+Remember each *jack* operation is constant time. That's how it can perform so well.
+
+We can actually use this search algorithm to solve satisfiability. We can init the state with an extra qubit for each state `i`, such that that qubit indicates whether the state `i` satisfies the clauses of satisfiability. We can then pefrom our search to find a state that satisfies.
+
+It allows us to reduce the time down to `O(1.414^n)`, but this is still not polynomial.
+
+### The Faster Fourier Transform
+Fast Four Transform (FFT) is the most important algorith in signal processing. It converts an N-element numerical time series into an equivalent representation as the sum of N periodic functions of different frequencies. It essentially changes the representation of a signal from its original domain (either time or space) into the frequency domain, so that it can be described via a collection of frequencies functions. The purpose is to allow us to work with signal data in the frequency domain, which opens up more algorithms, e.g. compression and filtering as well as many more.
+
+The best traditional algorithm we have is a divide-and-conquer algorithm that's `O(nlogn)`, but a quantum algorithm allows for `O(n²)`. The catch is that we can't actually pull out the coeffiecents of each of these 2^n terms in the frequency series, only a random one. But it lays the groundwork for the most famous algorithm: Shor's.
+
+### Shor's Algorithm for Integer Factorization
+Integer factorization has a connection to periodic functions: 7 is factor of 7 14 21 28, etc. So this is clearly a periodic function of period 7. 
+
+The FFT allows us to convert the series from the time domain (here it's multiples of 7 less than N) into the frequency domain, with non-zero value for the seventh Fourier coefficient signifying a repeating function of period 7. 
+
+We can setup our quantum machine in a time domain such that the integers of factors of some integer `M` that is `M < N` have large probabilties. Therefore sampling from the machine will give us a random multiple of a factor of `M`. But it doesn't give us an actual factor of `M`. But we can use the greatest common divisor to get the factor using `M` and the integer multiple we sampled.  Here's the pseudo:
+
+
+```
+Factor(M)
+  Set up an n-qubit quantum system Q, where N = 2n and M < N.
+  InitializeQsothatp(i)=1/2n forall0≤i≤N−1.
+  Repeat
+    Jack(Q,“all i such that (gcd(i,M) > 1)”)
+  Until the probabilities of all terms relatively prime to M are very small.
+  FFT(Q).
+  For j = 1 to n
+    Sj = Sample(Q)
+      If ((d = GCD(Sj,Sk)) > 1) and (d divides M)), for some k < j
+        Return(d) as a factor of M
+  Otherwise report no factor was found
+```
+
+## Prospects of Quantum Computing
+
+1. *It's going to happen*: The author can detect BS and feels quantum computing has gotten passed the sniff test.
+2. *Unlikely to impact the problems in this book*: With the exception of integer factorization, there doesn't seem to be any way quantum algorithms can do better than the algorithms discussed.
+3. *The big wins will be in problems computer scientists don't care about*: The biggest applications seem to be in simulating quantum systems. This is a big deal in chemistry and material science, and potentially drug design and engineering. But it's not clear if computer science will benefit all that much.
+
+### Differences to actual quantum mechanics
+The description so far has been simplified. In reality:
+1. *Probabilities are complex numbers*
+2. *Reading the state of a quantum system destroys it*: Any observation collapses the wave function so we're forced to recreate the state each iteration.
+3. *Quantum systems decohere*: The main engineering challenge is to limit decoherence of the quantum system. Currently we can't do it for very long so the algorithms we can run are limited.
+4. *Initializing the quantum system is more complex than we implied here*
+
+
+# Chapter 13 How To Design Algorithms
+All the previous chapters provide the basic ideas underlying all combinatorial algorithms. The problem catalog from Chapter 14 onwards helps us model our application, informing what is known about a given problem and the algorithms available.
+
+They key to algorithm design (or any problem-solving task) is to ask questions to guide your thought process. What if we do this? What if we do that? If we get stuck, move onto another question. The best approach in brainstorming is to ask more questions.
+
+What follows is some questions we can ask when designing an algorithm. Each should be answer not with a single answer, but an explanation of the reasoning.
+
+It's important to distiguish strategy (the big picture framework) and tacitcs (minor battles along the way). If you have no stategy, tactics are pointless. E.g. strategy: can I use a graph algorithm?. Tactical: adjacency list vs matrix.
+
+
+1. Do I really understand the problem?
+  (a) What exactly does the input consist of?
+  (b) What exactly are the desired results or output?
+  (c) Can I construct an input example small enough to solve by hand? What happens when I try to solve it?
+  (d) How important is it to my application that I always find the optimal answer? Might I settle for something close to the best answer?
+  (e) How large is a typical instance of my problem? Will I be working on 10 items? 1,000 items? 1,000,000 items? More?
+  (f) How important is speed in my application? Must the problem be solved within one second? One minute? One hour? One day?
+  (g) How much time and effort can I invest in implementation? Will I be limited to simple algorithms that can be coded up in a day, or do I have the freedom to experiment with several approaches and see which one is best?
+  (h) Am I trying to solve a numerical problem? A graph problem? A geometric problem? A string problem? A set problem? Which for- mulation seems easiest?
+
+2. Can I find a simple algorithm or heuristic for my problem?
+  (a) Will brute force solve my problem correctly by searching through all subsets or arrangements and picking the best one?
+    i. If so, why am I sure that this algorithm always gives the correct answer?
+    ii. How do I measure the quality of a solution once I construct it?
+    iii. Does this simple, slow solution run in polynomial or exponential time? Is my problem small enough that a brute-force solutionwill suffice?
+    iv. Am I certain that my problem is sufficiently well defined to ac-tually have a correct solution?
+  (b) Can I solve my problem by repeatedly trying some simple rule, like picking the biggest item first? The smallest item first? A random item first?
+    i. If so, on what types of inputs does this heuristic work well? Do these correspond to the data that might arise in my application?
+    ii. On what inputs does this heuristic work badly? If no such examples can be found, can I show that it always works well?
+    iii. How fast does my heuristic come up with an answer? Does it have a simple implementation?
+
+3. Is my problem in the catalog of algorithmic problems in the back of this book?
+  (a) What is known about the problem? Is there an available implementation that I can use?
+  (b) Did I look in the right place for my problem? Did I browse through all the pictures? Did I look in the index under all possible keywords?
+  (c) Are there relevant resources available on the World Wide Web? Did I do a Google Scholar search? Did I go to the page associated with this book: www.algorist.com?
+
+4. Are there special cases of the problem that I know how to solve?
+  (a) Can I solve the problem efficiently when I ignore some of the input parameters?
+  (b) Does the problem become easier to solve when some of the input parameters are set to trivial values, such as 0 or 1?
+  (c) How can I simplify the problem to the point where I can solve it efficiently? Why can’t this special-case algorithm be generalized to a wider class of inputs?
+  (d) Is my problem a special case of a more general problem in the catalog?
+
+5. Which of the standard algorithm design paradigms are most relevant to my problem?
+  (a) Is there a set of items that can be sorted by size or some key? Does this sorted order make it easier to find the answer?
+  (b) Is there a way to split the problem into two smaller problems, perhaps by doing a binary search? How about partitioning the elements into big and small, or left and right? Does this suggest a divide-and-conquer algorithm?
+  (c) Does the set of input objects have a natural left-to-right order among its components, like the characters in a string, elements of a permutation, or the leaves of a rooted tree? Could I use dynamic programming to exploit this order?
+  (d) Are there certain operations being done repeatedly, such as searching, or finding the largest/smallest element? Can I use a data structure to speed up these queries? Perhaps a dictionary/hash table or a heap/priority queue?
+  (e) Can I use random sampling to select which object to pick next? What about constructing many random configurations and picking the best one? Can I use a heuristic search technique like simulated annealing to zoom in on a good solution?
+  (f) Can I formulate my problem as a linear program? How about an integer program?
+  (g) Does my problem resemble satisfiability, the traveling salesman problem, or some other NP-complete problem? Might it be NP-complete and thus not have an efficient algorithm? Is it in the problem list in the back of Garey and Johnson [GJ79]?
+
+6. Am I still stumped?
+  (a) Am I willing to spend money to hire an expert (like the author) to tell me what to do? If so, check out the professional consulting services mentioned in Section 22.4 (page 718).
+  (b) Go back to the beginning and work through these questions again. Did any of my answers change during my latest trip through the list?
+
+## 13.1 Preparing for Tech Company Interviews
+Algorithm problems tend to creep into interviews into two ways:
+1. Pre-screening
+2. Blackboard coding challenge
+
+Use LeetCode or HackerRank. Start with the examples problems at the end of each chapter. Start slow and simple and then build up your speed. Figure out whether your weak spot is ini the correctness of boundary cases or errors in your algorithm itself, and then work to improve. The author has a book *Programming Challenges* that could be useful.
+
+Once past the screening, an onsite will happen, which most likely will include a blackboard algorithm design challenge. They'll be similar to the problems given at the end of each chapter. Some of them have been lablled *interview questions* as they have been rumored to be in use at tech companies.
+
+For the whiteboard questions:
+1. Ask clarifying questions
+2. Start with a simple, slow and correct algorithm before trying to get fancy
+3. Speak out loud - they want to hear your thought process
+4. Don't be intimidated: most interviewers are just asking question they were asked by others
