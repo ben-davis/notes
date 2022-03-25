@@ -3340,3 +3340,159 @@ We want regular fat regions and evenly split sets of points, both doing both is 
 3. *Partial key search*: If we on't have an exact information about `q`, we can find all cells that are within some range. Much quicker than checking all points.
 
 Kd-trees are bad when the dimensions are too big, say 20. Things get exponential. Just avoid it if possible by projecting away the least important dimensions.
+
+# Chapter 16 - Numerical Problems
+Numerical computation has been increasing in importance due to the rise of machine learning. But numerical algorithms are a different beast vs combinatorial algorithms due to:
+
+1. *Issues of precision and error* - Numerical algorithms tend to perform over continuous data sets and so perform floating point computations. These can accumulate over many iterations, compounding the error.
+2. *Extensive library of codes*: There are many algorithms that have existed since the 60s to solve numerical computations. So the algos mentioned in this section rarely need to be manually implemented.
+
+## 16.1 Solving Linear Equations
+**Input description**: An m × n matrix A and an m × 1 vector b, together representing m linear equations on n variables.
+**Problem description**: What is the vector x such that A · x = b?
+
+Solving a system of linear equations is crucial to many scientific computing needs, e.g. analyzing electrical circuits to preduct the current through each branch of the circuit requires it. Many machine learning algorithms like linear regression and singular value decomposition (SVD) require it too. Even finding the point of intersection between multiple lines required it.
+
+The basic algorithm to solve a linear system is Gaussian elimiation. The key realization behind it is that a solution to a system is invariant under scaling (if x = y, then 2x = 2y) and adding equations. Guassian elimiation scales and adds the equations to elimate variables from all but one equation, which can then be used to read off a solution.
+
+For an n x n system of equations, its O(n³).
+
+Key lession: just use a library.
+
+## 16.2 Bandwidth Reduction
+**Input description**: A graph G = (V, E), representing an n × n matrix M of zero and non-zero elements.
+**Problem description**: Which permutation p of the vertices minimizes the length of the longest edge—i.e., minimizes max(i,j)∈E |p(i) − p(j)|?
+
+The **bandwidth problem** seeks a linear ordering of the vertices, which minimizes the length of the longest edge. Useful for things like minimizes the longest edge wire in a circuit.
+
+Other variations exist. **Linear arrangement** seeks to minimize the sum of the lengths of the edges. In **profile minimization** we seek to minimize the sum of one-way distances.
+
+All of these are NP-complete. Therefore the only options are brute-force search and heuristics. Fortnuately there are a bunch of well-researched high-quality heuristics out there.
+
+## 16.3 Matrix Multiplication
+**Input description**: An x × y matrix A and a y × z matrix B.
+**Problem description**: Compute the x × z matrix A × B.
+
+Its main signficance to combinatorial algorithms is its equivalence to many other problems, like transitive closure/reduction, parsing, solving linear systems, and matrix inversion. Faster matrix mult => faster solutions to these problems. It's also important in its own right in coordinate systems.
+
+Matrix multiplication is often used for data rearrangement problems instead of hard-coded logic. Essentially: matrix mult can be used in place of many other, more computationally difficult, solutions.
+
+Generally: it's very difficult to beat the O(n³) of a basic nested loop. You can get better performance if the matrices are of a certain type. There are also faster algorithms (fastest is O(n².1)) but they're less numerical stable. (I think there's a faster one since the time this book was written).
+
+## 16.4 Determinants and Permanents
+**Input description**: An n × n matrix M .
+**Problem description**: What is the determinant |M| or permanent perm(M) of the matrix M?
+
+The determinant of a matrix M is defined as a sum over all n! possible permutations πi of the n columns of M. Useful in solving various liner algebra problems: whether a matrix is singular (no inverse), whether a set of d points lie on a plane of less than d dimenions, testing whether a point is on the left or right of a line or plane, or computing the area of a triangle or volume of a tetrahedron (or other simpical complex).
+
+## 16.5 Constrained/Unconstrained Optimization
+**Input description**: A function f(x1,...,xn).
+**Problem description**: Which point p = (p1, . . . , pn) maximizes (or minimizes) the function f?
+
+This problems has skyrocketed in importance due to its need in machine learning, specifically linear regression and deep learning.
+
+Optimization arises whenever you have an objective function that must be tuned for optimal performance. ML is filled with these. Unconstrained optimization problems also arise in scientific computation. Physical systems from protein molecules to galaxies of stars naturally seek to minimize their “energy” or “potential function.”
+
+Global optimization problems tend to be difficult. These questions can help:
+
+1. **Constrained vs unconstrained**: Unconstrained = no limitations on the values of the parameters. Constrained = there are limits. E.g. you can't have less than zero employees.
+2. **Is there a formula?**: If there's a mathematical formula that describes the objective function. If so, we can use things like Mathematica.
+3. **Is the function convex?**: The main issue with global optimization is local optima. Convex functions have exactly one maxima or minima. So these don't have that issue as we just use gradient descent to walk in whichever direction leads to the goal. Knowing whether a function is convex is hard.
+4. **Is the function smooth?**: Even if the function is not convex, there's a good chance it's smooth, meaning neighbours of a point are usually close in value to that point. If the value was random, it'd be very hard to use any algorithm to find the optima (short of sampling every point).
+5. **Is the function expensive to compute?**: If it is, we probably want a simple grid search rather than something like gradient descent.
+
+The most efficient algorithms for convex optimization use derivates and partial derivates, either computically analytically or numerically by sample nearby points.
+
+Simulated annealing is a fairly robust approach to constrained optimization, particularly when we are optimizing over combinatorial structures (permuta- tions, graphs, subsets)
+
+## 16.6 Linear Programming 
+**Input description**: A set S of n linear inequalities on m variables and a linear optimization function f(x).
+**Problem description**: Which variable assignment X′ maximizes the objective function f while satisfying all inequalities S?
+
+Linear programming is the most important problem in mathemat- ical optimization and operations research. Applications include:
+
+1. Resource allocation (where to spend money, who to layoff, etc).
+2. Approximating the solution of inconsistent equations (when no solution solves all the equations in a linear system so we want to find the most optimimum solution).
+3. Graph algorithms (shortest path, bipartite matching, and network flow can all be solved using LP).
+
+The simplex method is the standard algorithm for linear programming. Each constraint removes some region in the space of possible solutions. We then seek the point that maximises or minimizes the function in the remaining region. By rotating the space, we can make the optimal solution the "highest" point, and so can simply "walk" to it.
+
+Sounds simple but it can be very complex. Just use existing LP code.
+
+## 16.7 Random Number Generation
+**Input description**: Nothing, or perhaps a seed.
+**Problem description**: Generate a sequence of random integers.
+
+Random numbers are very important. Why:
+1. Simulated annealing and related heuristic optimiztion techniques.
+2. Discrete event simulations (for simulating everything from cities to poker)
+3. Passwords and cryptographic keys
+4. Randomized algorithms
+
+Unfortunately it is fundamentally impossible to produce random numbers on a deterministic device. Von Neumann [Neu63] said it best: “Anyone who considers arithmetical methods of producing random digits is, of course, in a state of sin.” The best we can hope for are pseudorandom numbers, a stream of numbers that appear as if they were generated randomly.
+
+One common way around this is using a seed, something like the low-order bits of the system clock. This way, at least the numbers are random each time its run. Good for things like games, but still not at all secure. There are much smarter ways that exist and we should use them, not write our own.
+
+One thing to consider: Monte Carlo simulations only increase in performance up until the time the repetitions exceeds the period, or cycle length, of the random number generator. After that they start to repeat. It's usually better to do many smaller iterations using different seeds.
+
+## 16.8 Factoring and Primality Testing
+**Input description**: An integer n.
+**Problem description**: Is n a prime number? If not, what are its factors?
+
+Super important. The RSA public-key cryptography system is based on the computational intractability of factoring large integers. We know the hash table performance typically improves when the table size is a prime number.
+
+Factoring and primality testing are related, but different algorithmically. Algos exist that prove not prime (compsite) that don't give factors.
+
+The simplest algo is just brute force. You can speed these up using a precomputed table. Surprisingly we can store a lot of them in relatively small space. E.g. all odd numbers less than 1,000,000 fits in under 64KB. There are even more tight encodings.
+
+The fastest known factorization algorithm is called the *number field sieve*, which uses randomness.
+
+Testing primality can be done using randomization and Fermat's little theorem.
+
+## 16.9 Arbitrary-Precision Arithmetic
+**Input description**: Two very large integers, x and y.
+**Problem description**: What is x + y, x − y, x × y, and x/y?
+
+Using numbers larger than what can fit in 64-bits is useful. E.g. RSA recommends 2048-bit integers for keys.
+
+Some things to consider:
+1. Do you need to build solution or perform a computation? If its' the latter, just use Python. It has built-in support for arbitrary-precision arithmetic.
+2. Is it really unbounded or just high? If so, a simple large array will suffice, rather than a linked-list of digits.
+3. What base? Although decimal is obviously easier, use the highest base possible (ideall the square root of the largest int supported). The reason: the higher the base, the less bits are needed to represent it.
+4. How low-level are you willing to go? Assembly can be quicker, as too are using bit-level masking and shifts instead of arithmetic operations.
+
+The algos of choice for each op:
+1. **Addition**: There are parallel algos, but the basic add and carry method from school is good. It's linear in the number of digits.
+2. **Subtraction**: Just a special case of addition. Machine's use two's complement to simplify.
+3. **Multiplication**: Repeated addition is super slow, don't use. The digit by digit method from school is okay, its O(n²). The best algo is Karatsbua O(n1.59).
+4. **Division**: Repeated subtraction is exponential, so long-division is the best. It can actually be reduced to integer multiplication.
+5. **Exponentiation**: aˣ can be done using x - 1 multiplications. But a much better route is a divide-and-conquer algo.
+
+## 16.10 Knapsack Problem
+**Inpue description**: A set of items S = {1, . . . , n}, where item i has size si and value vi. A knapsack capacity C.
+**Problem description**: Find the subset S′ of S that maximizes the value of 􏰁i∈S′ vi, given 􏰁i∈S′ si ≤ C; that is, all the items fit in a knapsack of size C.
+
+Discussion: The knapsack problem arises in resource allocation with financial constraints. How do you select what things to buy given a fixed budget? Everything has a cost and value, so we seek the most value for the given cost.
+
+Choicing the best algo depends:
+1. Does each item have the same cost? If so, just sort by size, and add the biggest first. 
+2. Do all items have the same "price per pound"?: If so, our problem is equivalent to ignoring the price and just trying to minimize the amount of empty space left in the knapsack. Unfortunately, even this restricted version is NP-complete, so we cannot expect an efficient algorithm that always solves the problem. The constant “price-per-pound” knapsack problem is often called the sub- set sum problem, because we seek a subset of items that adds up to a specific target number C; that is, the capacity of our knapsack.
+3. Are all the sizes relatively small integers? – When the sizes of the items and the knapsack capacity C are all integers, there exists an efficient dynamic programming algorithm that finds the optimal solution in time O(nC) and O(C) space.
+4. What if I have multiple knapsacks? – When there are multiple knapsacks, your problem might be better thought of as a bin-packing problem.
+
+Exact solutions for large capacity knapsacks can be found using integer programming or backtracking.
+
+Heuristics must be used when exact solutions prove too costly to compute. The simple greedy heuristic inserts items according to the maximum “price per pound” rule described previously. Often this heuristic solution is close to optimal, but it might prove arbitrarily bad depending upon the problem instance. The “price per pound” rule can also be used to reduce the problem size in exhaustive search-based algorithms by eliminating “cheap but heavy” objects from future consideration
+
+## 16.11 Discrete Fourier Transform
+**Input description**: A sequence of n real or complex values hi, 0 ≤ i ≤ n − 1, sampled at uniform intervals from a function h.
+**Problem description**: The discrete Forurier transform for 0 ≤ m ≤ n − 1.
+
+Functionally, Fourier transforms provide a way to convert samples of a standard time-series into the frequency domain. This provides a dual representation of the function, in which certain operations become easier than the original time domain. Applications of Fourier transforms include:
+
+
+1. **Filtering**: Taking the Fourier transform of a function is equivalent to representing it as the sum of sine functions. So for image noise removal we can drop some of those sine functions, convert back, and we've removed noise.
+2. **Image compression**: We can eliminate the coefficients of some of the sine transforms while doing relatively little to the actual image.
+3. **Convolution and deconvolution**: A convolution is the pairwise product of elements from two different sequences, such as in multiplying two n-variable polynomials f and g or comparing two character strings. Direct comparison is O(n²) but the fast fourier transform is O(nlgn). Another use: image processing. It takes the original signal from an image scanner and turns it into a Gaussian point-spread functin.
+
+FFT is so important that's its usually implemented in hardware for signal-processing systems.
