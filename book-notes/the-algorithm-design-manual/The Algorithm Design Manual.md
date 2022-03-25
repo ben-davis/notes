@@ -3193,3 +3193,150 @@ For the whiteboard questions:
 2. Start with a simple, slow and correct algorithm before trying to get fancy
 3. Speak out loud - they want to hear your thought process
 4. Don't be intimidated: most interviewers are just asking question they were asked by others
+
+# Chapter 15 - Data Structures
+
+## 15.1 Dictionaries
+**Input Description**: A set of `n` records, each identified by one or more keys.
+**Problem Description**: Build and maintain a data structure to efficiently locate, insert, and delete the record associated with any query key.
+
+The dictionary is one of the most important data structures we have. Because of that, there have been many implementations of them: hash tables, skip lists, balanced/unbalanced binary trees. But don't get hung up on that: it's more important to pick the right data structure than figure out which implementation of that data structure to use.
+
+A key piece of advice is to build the interface in an implementation agnostic way (I imagine that's key for any data structure).
+
+When choosing the dictionary implementation, think about:
+1. **How many items will it have?** Can this be known in advance? Are there memory constraints?
+2. **How often will you insert, delete and search?**
+3. **Will the access pattern for keys be uniform and random?**: Often searches exhibit skewed access distribution, meaning some elements are accessed more often than others.
+4. **Is it crucial that each operation be fast, or only that the total work is minimized?**
+
+### Implementations
+
+**Unsorted linked lists or arrays**: For small data sets, an unsorted array is probably the easiest to maintain. Linked structures such for cache performance. Arrays suck too if it gets too big. An interesting variant is the *self-organizing list*: when accessing an element, we move it to the head. This exploits how access patterns often reflect popularity of some subset.
+
+**Sorted linked lists or arrays**: Sorting isn't usually worth it unless eliminating duplicates is the point.
+
+**Hash tables**: For a moderate-to-large number of keys, a hash table is the way to go. Here's how it works:
+
+1. We use a function that maps keys (strings, number, whatever) to integers between 0 and `m` - 1, where `m` is the number of buckets.
+2. We maintain `m` buckets, each containing a unsorted linked list of the items that hashed to the buckets hash.
+3. Then we insert, search, delete from that linked list. Hopefully the distribution of the hash is even enough that means that each bucket contains relatively few items.
+
+Question for implementation:
+1. How to deal with collisions? Ideally the number of buckets would be equal to the number of elements. But we migt not know that ahead of time. Generally we're trying to minimize load factor (ratio of occupancy to capacity).
+2. How big should the table be? With bucketing, we want `m` to be about the same as the max elements we expect. With open addressing, make tha table 30 to 50% larger. If `m` is prime, we minimze the danger of a bad hash function.
+3. Which hash function? For strings, use a function that maps it to a character code. Use an established one like Horner's rule. 
+
+Ensure that you test how distributed the hash function really is.
+
+**Binary Search Trees**: Supports fast insertion, deletions, and queries. The differentiating factor between different trees is whether they rebalance on insertion or deletion. Random trees don't rebalance, so insertions are quick but as most apps aren't random, they become unbalanced so searching/deletion becomes slow. Inserting in sorted order just degnerates to a linked list.
+
+Balanced trees use local *rotation* operations for restructuring, moving more distance nodes closer to the root, all while maintaining the rigid ordering required for a binary tree. There are many implementations of this rotation. A popular one is *red-black trees*. Also *splay tree*.
+
+**B-trees**: If the data set is too large to fit in memory, then go for some variation of a B-tree, a self-balancing variation of a binary search tree. The key idea is that some number of levels of a binary tree are compacted into a single large node, meaning a node can have more than 2 children. Each inner node will have a number of keys 1 less than number of children, with the keys subdividing the range of values found in each children. Similar to binary tree, but just generalized. The contents of that node could then be stored on disk, usually sized in a page-structured way. So we can search quickly within the outer tree, before needing to do a disk read. Knowing the performance of your disk is key to knowing if a b-tree is appropriate. There's no different in time complexity with a binary tree.
+
+**Skip lists**: An easy to analyze and implement alternative to binary trees. They have O(lgn) query time. It contains a heirarchy of linked lists. At each level, we flip a coin to decide whether to store a given element in that list. This means that each list has half the previous list. Searches start at the smallest list and work upwards.
+
+## 15.2 Priority Queues
+**Input description**: A set of records with totally ordered keys.
+**Problem description**: Build and maintain a data structure for providing quick access to the smallest or largest key in the set.
+
+Good for: storted events by time. They're called priotity queues because retrieval is done not based on insertion time (stack or a queue), nor by key match (dictionary), but by highest priority of retrieval. If no insertion happens after query, then just use an array sorted by priority.
+
+### Implementations
+Choose from these based on whether you need other operations (searching for arbitrary keys, deleting keys, etc), do you need to know the maximum size up-front, or could the priority of an element change while in the queue.
+
+**Sorted array or list**: Very efficient to identify the smallest element and delete it (decrement the top index). New insertions are slow though.
+
+**Binary heaps**: Supports insertion and extra-min in O(lgn). They maintain an implicit binary tree such that each node is smallest than its children, thus the smallest element is the root. New keys are inserted by placing in an open leaf, and percolating up until it's in the right place. They're the right choice when you know the upper bound on the number of items since you need to specify the array size (could be mitigated using dynamic arrays).
+
+**Bounded-height priority queue**: Array-based structure that supports constant-time insertion and find-min ops whenever the range of possible keys is limited. If we know the limit is `n`, then we create `n` linked lists, so that `ith` list contains all items within the `i` key. We maintain a *top* pointer to the smallest non-empty list. To insert an item with key `k`, add to `kth` bucket and update `top = min(top, k)`. To extract the min, get the first item from the *top* bucket, delete it, and move *top* down if its become empty. 
+
+Very useful for maintaining verts of a graph sorted by degree.
+
+**Binary search trees**: They make effective priority queues, since the smallest element is always the left-most leaf, the largest the right-most. Great when you need other dictionary operations or have an unbounded key range.
+
+**Fibonacci and pairing heaps**: Complicated. Designed to speed up *decrease-key* ops. Great for very large computations.
+
+## 15.3 Suffix Trees and Arrays
+**Input description**: A reference string S.
+**Problem description**: Build a data structure for quickly finding all places where an arbitrary query string q occurs in S.
+
+They often speed up string processing algorithms from O(n²) to linear. In its simplest implementation, its a *trie* of the `n` suffixes of an `n`-character string `S`. A trie is a tree, where each edge represents one character, and the root represents the null string. Each path from the root represents a string. Every finite set of words defines a distinct trie and two words with common prefixes branch from each other at the first distiguishing character. Each leaf denotes the final string.
+
+Tries are useful because to find whether a query `q` is in a set of strings, we simple try to traverse the tree using `q`. Very simple to build (just repeatedly insert the strings) and very quick to search (just walk), but they use lots of memory.
+
+A suffix tree is just a tie of all proper suffixes of `S`. It allows us to easily determine whether `q` is a substring of `S` because any substring of `S` is the prefix of some suffix. (that's so cool). Search time is linear.
+
+The catch is it can take O(n²) time to build and even worse O(n²) space. But we can be clever by realizing that all paths are suffixes and so can be represented using an index into an array containing the original string. This allows us to use O(n) space. There are also O(n) algorithms to construct the trie.
+
+### Uses
+1. *Find all occurences of character q as a substring of S*. The first substring is from the root to the node associated with q. All other occurences are then in the subtree of `nq`. We use DFS on that to find them. Takes O(q + k).
+2. *Longest substring common to a set of strings*. Basically we build a single suffix tree of all strings, with each node labeled with its original string. We then do DFS on the tree, marking each node with the length of its common prefix and the number of distinct strings that are children of it. With this info, we can select the best node in linear time.
+3. *Find the longest palindrom in S*: Build a single tree using S and the reverse of S. A palidrom is defined by any node in the tree that has formward and reversed children in the same position.
+
+Linear time construction of suffix trees is not trivial: use an existing implementation. But actually it's usually much easier and as fast to use suffix arrays, while using far less space. A suffix array contains all the suffixes in sorted order. Thus a binary search on it will find `q` in O(lgn). Trees should be used when the linear search time is really important vs the O(lgn) time.
+
+
+## 15.4 Graph Data Structures
+**Input description**: A graph G.
+**Problem description**: Represent the graph G using a flexible, efficient data structure.
+
+There are two basic data structures for graphs: *adjacency matrics* (an n x n matric where 1 in an element means an edge between the corresponding row, column) and *adjacency lists* (collection of unordered lists, where each list contains the neighbours of a some vertex. Implementations differ on how these neighbours and their common element are stored). The matrix will use O(n²) whereas the list is proportional to the edges and verts. Generally, adjacency lists are the way to go.
+
+Questions that could determine which to use:
+1. *How big is the graph?*: Matrices only make sense for small graphs (< 1000 verts say).
+2. *How dense?*: If most verts have edges, then there's no use in adjanency lists, as you'll probably end with O(n²) anyway.
+3. *Which algorithms are to be used?*: Some algos are natural fits for matrices (all-pairs shortest path) where most DFS algos favor lists. Matrices are great of yoou need to answer is (i, j) in G. Most algos can elimate the need for this question.
+4. *Will you modify the graph while running the computation?*: Most of the time we don't modify the topology, we modify attributes. These are best stored as attributes attached to the vertex in the matrix or edge records of adjacency lists.
+5. *Is it persistent?*: Don't use in-memory, use neo4j or similar.
+
+Building a good graph structure is hard. Use an existing implementation.
+
+Other types of graphs:
+1. Planar graphs: graphs that could be draw on a plane such that no two edges cross. Always sparse, so use adjacency lists.
+2. Hypergraphs: A graph where an edge may link more than 2 verts. E.g. which representative is on which committee. Two structures we could use:
+  1. Incidence matrices: similar to adjacency matrices, but where the row is a vert and the column is an edge. A 1 in an element means vertex `i` is adjacent to edge `j`.
+  2. Bipartite incidence structures: similar to adjacency lists, so good for sparse hypergraphs.
+
+## 15.5 Set Data Structures
+*Input description*: A universe of items U = {u1, . . . , un} on which is defined a collection of subsets S = {S1, . . . , Sm}.
+*Problem description*: Represent each subset so as to efficiently (1) test whether ui ∈ Sj, (2) compute the union or intersection of Si and Sj, and (3) insert or delete members of S.
+
+It's usually good to represent each set in a single canonical order, typically sorted, to speed up or simplify various operations. Sorted order makes finding the union or intersection of two subsets a linear-time op (sweep left to right and see what's missing). It makes possible element searching sublinear time.
+
+It's useful to distinguish sets from dictionaries and strings: a collection of objects *not* drawn from a universal set is best thought of as a dictionary, and strings are structures where order matters.
+
+When every subset is only two elements, we have a graph, where the sets are edges from the universal set of verts. A system of subsets with no restrictions on the cardinality of sets is a hypergraph.
+
+The primary alternatives for representing arbitrary subsets are:
+1. *Bit-vectors*: An n-bit vector or array can represent any subset S on a universal set U containing n elements. Very space efficient. Element insertion or deletion is just bit flipping. Intersection or union is just and or or on the bits together. Main drawback: inefficient on sparse subsets. 
+2. *Containers or dictionaries*: A subset can represented using a linked list, array, or dictionary containing just the elements of S, with no notion of the universal set. Dictionaries are more space and time efficient for sparse subsets thatn bit vectors and easier to work with. For efficient union and intersection, keep the subsets sorted so linear-time merge can identify dupes. Python implements them as dictionaries with None values (with some optimization (presumably ordering) so that intersection is linear in the smallest list).
+3. *Bloom filters*: Mainly just to make it more space-efficient vs hash tables. Emulates a bit vector essentially.
+
+There's some extra implementation details around pairwise disjoint subsets (where a given element is in exactly one subset). Refer to the source if needed.
+
+## 15.6 Kd-trees
+**Input description**: A set S of n points (or more complicated geometric objects) in k dimensions.
+**Problem description**: Construct a tree that partitions space by half-planes such that each object is contained in its own box-shaped region.
+
+Kd-trees decompose space into a small number of cells, each with only a few points from the input. This gives us a fast way to access an object by position. We traverse the heirarchy to find the smallest cell containing a point, and then iterate through its elements.
+
+Typically implemented by partitioning point sets. Each node is defined by a plane that cuts through one of the dimensions, ideally equally down the middle. The children of each half are then split again through a different dimension. We stop after lgn levels.
+
+Each region is defined by two planes (cuts through the space) * the dimension. So in 2D space, it takes 4 planes to define the box. "kd" means "k-dimensional".
+
+There are different ways to choose which dimension to select when cutting:
+1. Round-robin through dimensions
+2. Use the largest dimension: select the dimension that makes the regions as square or cube-like as possible
+3. Quadtrees or octrees: Use all dimensions with each cut. For 2D, each split creates 4 regions. Popular with image data as a leaf cell means all pixels in the region have the same color (as the regions where split based on something like RGB).
+4. Random projection trees: Choose a random dimension.
+5. BSP-trees: *Binary space partitions* uses plans no axis parallel (called general planes), so that each cell ends up containing only a single object (e.g. polygon). Downside is the result KD-tree is more complicated to work with. A key structure for representing scene info in a renderer.
+6. Ball trees: Each node represents a ball with a center and radius. Each node's ball is the smallest that contains the balls of its children (weird sentence). Very good for nearest-neighbour search, but regions can intersect and do not partition the entire space.
+
+We want regular fat regions and evenly split sets of points, both doing both is impossible. Benefits of fat cells:
+1. *Point location*: At each node, check which side of the partition out query point lies. Recur. If split evenly, this will be proportional to the height of the tree.
+2. *Nearest-neighbour search*: Simply find the cell containing the neighbour and search within the cell. As the point may lie on an edge of the cell, we'll need to search all other cells < the distance to the nearest point in the origin cell.
+3. *Partial key search*: If we on't have an exact information about `q`, we can find all cells that are within some range. Much quicker than checking all points.
+
+Kd-trees are bad when the dimensions are too big, say 20. Things get exponential. Just avoid it if possible by projecting away the least important dimensions.
