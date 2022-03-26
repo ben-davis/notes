@@ -1,5 +1,5 @@
 # Chapter 1 - Introduction to Algorithm Design
-Algorithm's are procedures that solves *problems*.seta It must, in order to be correct, solve all *instances* of that problem. The difference between a general, well-specified problem and instances of that problem are key. Algorithms that only solve a subset of instances, and not the problem more generally, are incorrect.
+Algorithm's are procedures that solves *problems*. It must, in order to be correct, solve all *instances* of that problem. The difference between a general, well-specified problem and instances of that problem are key. Algorithms that only solve a subset of instances, and not the problem more generally, are incorrect.
 
 Three desirable properties of a good algorithm:
 1. Correct
@@ -8,7 +8,7 @@ Three desirable properties of a good algorithm:
 
 These may not be achievable simultaneously.
 
-An algorithm generally by describes as an input of some description and a desired output based upon that input.
+A problem solved by an algorithm is generally described as an input of some description and a desired output based upon that input.
 
 Throughout the book he'll use the traveling salesman problem to describe various lessons on algorithms. In this chapter he ran through some of the naive approaches to solving the problem of how to minimize the total distance traveled when visiting a set of points exactly once. First was the idea randomly choosing a point and then walking the rest via a nearest neighbor search. This is obviously wrong as there's no way to choose the first point other than randomly. Then there was the idea of the closest-pair heuristic that would attempt to build a chain by repeatedly finding the closest pairs of points and then merging them correctly. This also has issues.
 
@@ -20,7 +20,7 @@ He then describes the movie scheduling problem: if an actor has n number of poss
 > Reasonable looking algorithms can easily be incorrect. Algorithm correctness is a property that must be carefully demonstrated.
 
 ## 1.3 Reasoning about Correctness
-We need tool that we can use to determine which algorithms are correct. The primary tool is a mathematical proof. A proof has 3 parts:
+We need tools that we can use to determine which algorithms are correct. The primary tool is a mathematical proof. A proof has 3 parts:
 1. A clear, precise statement of what you're trying to prove
 2. A set of assumptions that can be taken as true
 3. A chain of reasoning from the axioms to the statement being proved
@@ -41,7 +41,7 @@ Defining the output requirements have two traps:
 2. Creating compound goals, where the output requires too many things. Such outputs may be well defined, but are complicated to reason about and solve.
 
 ### Expressing an algorithm
-We can use human language, pseudocode, or actual code. Which depends on context. But we should always opt of the one that most clearly express the *idea* of the algorithm. If it's not clear enough, perhaps we're using too low-level a language.
+We can use human language, pseudocode, or actual code. Which depends on context. But we should always opt for the one that most clearly express the *idea* of the algorithm. If it's not clear enough, perhaps we're using too low-level a language.
 
 ### Demonstrating incorrectness
 > Searching for counterexamples is the best way to disprove the correctness of a heuristic.
@@ -92,7 +92,7 @@ Remember though that not all problems always fit tidily within a well-defined ab
 	1. Likely the object in question when the problem seeks an "text", "characters", "patterns", "labels".
 
 ### Recursive objects
-**Thinking recursively is learning to look for bug things that are made from smaller things of *exactly the same type as the big thing*.**
+**Thinking recursively is learning to look for big things that are made from smaller things of *exactly the same type as the big thing*.**
 
 Recursive structures occur everywhere in the algorithmic world. Each of the structures above have a way to describe in terms of recursion:
 1. **Permutations**: Delete the first element of a permutation of `n` and you get a permutation of `n-1`.
@@ -123,7 +123,7 @@ Take Euclid's proof that there are infinite primes:
 **NOTE**: 1.7 and 1.8 are the war stories that I'm not always making notes on.
 
 ## 1.9 Estimation
-When you don't know the answer, estimate (principled guessing). E,g, the running time of a program.
+When you don't know the answer, estimate (principled guessing). E.g. the running time of a program.
 
 Estimation is usually either principled calculation (function of quantities you already know or could easily find) or analogies (based on past experience). 
 
