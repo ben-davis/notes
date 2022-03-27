@@ -147,7 +147,6 @@ Machine-independent algorithm design depends on a hypothetical machine called th
 2. Loops and subroutines are *not* considered simple operations. Instead they are a composition of many single-step ops.
 3. Each memory access takes exactly one time step. We also have as much memory as we need. The RAM model doesn't differentiate between cache or disk access.
 
-
 **Essentially: under RAM, we measure run time by counting the steps an algorithm takes.**
 
 Although the assumptions made above are demonstratably not how a machine operates in reality, the simplified model proves to be a very good measure of real world performance. Think of it like the flat earth model. We know it's not reality, but in our daily lives, building houses, putting up shelves, etc, we use this model as a reliable measure of reality. The RAM model is the same.
@@ -188,7 +187,7 @@ Number of   │                               .                       x
 
                                     Problem Size
 ```
-Along the X axis is the size of the problem, with Y the number of steps, and the points the performance of a given arrangement of `n`.
+Along the X axis is the size of the problem, with Y the number of steps, and the plots the performance of a given arrangement of `n`.
 
 There are 3 interesting plots over these points:
 
@@ -196,7 +195,7 @@ There are 3 interesting plots over these points:
 2. *Best-case complexity*: the minimum steps taken in any instance of size `n`.
 3. *Average-case complexity* (or *expected time*): the average steps taken over all instances of size `n`.
 
-Worst-case generally provdes to be the most useful. Best-case is often unlikely and so is useless to think about. Average case can often be difficult to determine. What does average even mean? Worst-case is often easy to calculate.
+Worst-case generally provides to be the most useful. Best-case is often unlikely and so is useless to think about. Average case can often be difficult to determine. What does average even mean? Worst-case is often easy to calculate.
 
 That said, average-case is useful with respect to *randomized algorithms* which use random numbers to make decisions in an algorithm.
 
@@ -206,7 +205,7 @@ The best, worst, and average complexities are hard to work with in practice as t
 1. *Have too many bumps*: There are often irregularities with the performance of algorithms based on some particular value of `n` (binary search is typically faster when `n = 2^k - 1` because the array partitions work out nicely). Capturing the irregularities exactly would serve no real purpose when talking about the generalized performance of an algorithm.
 2. *Require too much detail to specify precisely*: We would essentially need to implement the entire algorithm to fully understand all the steps an algorithm could possibly take. Doing so would be exact, but offers little benefit over saying "the time grows quadratically with *n*".
 
-Big Oh notation allows us to discuss the upper and lower bounds of an algorith while ignoring its impactless specifics.
+Big Oh notation allows us to discuss the upper and lower bounds of an algorithm while ignoring its impactless specifics.
 
 **Note**: Big Oh ignores constants. So `f(n) = n == g(n) = 2n`. Constants tell us nothing aboout the performance of an algorithm as it scales. The constant might occur due to a difference in implementation (Java vs C) of the same algorithm.
 
@@ -214,7 +213,7 @@ Here are the formal definitions of Big Oh are:
 
 1. `f(n) = O(g(n))` means `c · g(n)` is an *upper bound* on `f(n)`. Therefore, some constant `c` exists such that `f(n) <= c · g(n)` for every `n` large enough (meaning `n >= n₀` where `n₀` is some constant).
 2. `f(n) = Ω(g(n))` means `c · g(n)` is a *lower bound* on `f(n)`. Therefore, some constant `c` exists such that `f(n) >= c · g(n)` for all `n >= n₀`.
-3. `f(n) = Θ(g(n))` means `c₁ · g(n)` is an upper bound on `f(n)` and `c₂ · g(n)` is a lower bound on `f(n)`, for all `n >= n₀`, for all `n >= n₀`. Therefore, some constant `c` exists such that `f(n) <= c₁ · g(n)` and `f(n) >= c₂ · g(n)`, for all `n >= n₀`. This means that `g(n)` is a tight bound on `f(n)`. Essentially a marge of the previous two using two constants.
+3. `f(n) = Θ(g(n))` means `c₁ · g(n)` is an upper bound on `f(n)` and `c₂ · g(n)` is a lower bound on `f(n)`, for all `n >= n₀`, for all `n >= n₀`. Therefore, some constant `c` exists such that `f(n) <= c₁ · g(n)` and `f(n) >= c₂ · g(n)`, for all `n >= n₀`. This means that `g(n)` is a tight bound on `f(n)`. Essentially a merge of the previous two using two constants.
 
 These all hold for a constant `n₀` such that `n >= n₀`. This reflects that there's always a lower bound on values of `n` that aren't particularly interesting and so we don't both modelling their complexity. E.g. evaluating a sorting algorithm for `n=4` isn't all that interesting, `n=10000` is far more interesting.
 
@@ -252,7 +251,6 @@ From this we can see:
 4. Quadratic-time algorithms (`n²`) are usable up to `n = 10,000`, but deteriorate for larger inputs. `n > 1,000,000` is hopeless.
 5. Linear-time and `nlogn` remain practical on inputs of one billion items.
 6. Any `O(logn)` algorithm hardly sweats for any imaginable value of `n`.
-
 
 Bottom line: even ignoring constant values, we get an excellent idea of performance for any given size of n.
 
@@ -393,33 +391,39 @@ When `n` is even, the sum of the first `n = 2k` integers can be seen by pairing 
 
 Generally there are two base classes of summation formulae:
 
-1. *Sum of a power of integers*: We know that the summation of the pairs evaluated in a selection sort is `n(n + 1)/2` = `O(n²)`. In general, for a sum of integers where the exponent is `p`, the complexity is `Θ(ⁿ⁺¹)`. Therefore the sume of sqaures is cubic, the sum of cubes is quartic.
-2. *Sum of geometric progression*: In geomtric progressions, the index of the loop affects the exponent, that is the summation is `(aⁿ⁺¹ - 1)/(a - 1)`. How we interpret the sum depends on the base `a`. So if `a < 1`, then the complexity converges to a constant as `n -> infinity`. This is the "free lunch" of algorithmic analysis. If `a > 1` though, the sum rapidly grows with each new term -> `Θ(aⁿ⁺¹)` for `a > 1`.
+1. *Sum of a power of integers*: We know that the summation of the pairs evaluated in a selection sort is `n(n + 1)/2` = `O(n²)`. In general, for a sum of integers where the exponent is `p`, the complexity is `Θ(ⁿ⁺¹)`. Therefore the sum of sqaures is cubic, the sum of cubes is quartic.
+2. *Sum of geometric progression*: In geometric progressions, the index of the loop affects the exponent, that is the summation is `(aⁿ⁺¹ - 1)/(a - 1)`. How we interpret the sum depends on the base `a`. So if `a < 1`, then the complexity converges to a constant as `n -> infinity`. This is the "free lunch" of algorithmic analysis. If `a > 1` though, the sum rapidly grows with each new term -> `Θ(aⁿ⁺¹)` for `a > 1`.
 
 ## 2.7 Logarithms and Their Applications
-A logarithm is simply an inverse exponential function. Saying `bٰˣ = y` is the same as saying `x = log_b(y)`. (Note: \_b means subscribt b but I can't easily write it).
+A logarithm is simply an inverse exponential function. Saying `bٰˣ = y` is the same as saying `x = log_b(y)`. (Note: \_b means subscript but I can't easily write it).
 
 Exponentials grow at a distressingly fast rate. Logarithms therefore grow refreshingly slow.
 
 **Logarithms arise in any process where things are repeatedly halved**.
 
 ### Logarithms and Binary Search
-Binary search is a good example of an `O(log n)` algorithm. You build the tree, and then on each iteration of the loop, you have the search space. Halving == logarithm. The number of steps is equal to the number of times we can halve `n` until we have only 1 left. By definition, this is exactly `log₂n`.
+Binary search is a good example of an `O(log n)` algorithm. You build the tree, and then on each iteration of the loop, you halve the search space. Halving == logarithm. The number of steps is equal to the number of times we can halve `n` until we have only 1 left. By definition, this is exactly `log₂n`.
 
 One of the most powerful ideas in algorithm design.
 
 ### Logarithms and Trees
 If we consider a general tree, where each level of the tree multiplies the number of nodes by `d`. When `d=2`, we have a binary tree, so `n = 2ʰ`, where `h` is the height of the tree. So the height (and therefore the number of iterations until an algorithm exhausts the data structure) is `h = log₂n`.
 
-But when `d` is larger it means that each level has more leaves. So each iteration has to consider more leaves, but discards more with each iteration. I think that's better but the book isn't clear.
-
-**I believe that  log_3 is better than log_2, but I'm not sure. I should rewrite this when I've finished the book and am reviewing these notes.**
+But when `d` is larger it means that each level has more leaves. So each iteration has to consider more leaves, but discards more with each iteration, which means it gets to the bottom quicker. Think of it this way: halving each time gets rid of LESS than quartering each time. But it doesn't actually change the asymptotic performance. More on that in a few sections down.
 
 ### Logarithms and Bits
 To represent `n` different possibilities with bits, we need `n = 2ʷ`. So therefore `w` bits is needed: `w = log₂n` bits.
 
 ### Logarithms and Multiplication
-Maybe feel this in when reviewing notes. By brain is too tired to remember multiplication rules for logs.
+We can exploit the fact that `loga(xy) == loga(x) + loga(y)` to make computing `aᵇ` much faster than repeating multiplying `a` by itself `b` times.
+
+A consequence of the above is that  `loga(nᵇ) = b · loga(n)`. We can then use our knowledge of the relationship between exponentation and logarithms to simplify further:
+
+```
+aᵇ = exp(ln(aᵇ)) = exp(bln(a))
+```
+
+So now instead of `b` multiplications, we've simplified to one multiplication, one `exp`, and one `ln`.
 
 ### Fast Exponentiation
 The worst algorithm to compute `aⁿ` would just do `a x a x a ...` `n-1` times. But we can do better. We know that `n` is equal to itself times two. So we can use that to know that if `n` is even, then `aⁿ = (a^(n/2))²`. If it's odd, `aⁿ = a(a^(n/2)²)`. In either case, we've halved the size of the exponent (and therefore the amount of work) at the cost of two multiplications. So `O(lgn)` is enough to compute the value.
@@ -454,7 +458,7 @@ logₐnᵇ = b · logₐn
 
 which simplifies to `lgn` because we ignore the base `a` and the constant `b`. The effectiveness of binary search on a wide range of problems is a consequence of this observation. Note that a binary search on `n²` items is only twice as slow as `n` items.
 
-**HEY**: this is important. The term binary search implies that its performance comes from the fact that each iteration splits the search space in half. So what if we were to split it not in half, but 1/3 and 2/3? So for a binaru tree of 1,000,000 items, the iterations is `log₂(1,000,000) = 20`. Taking 2/3 (worst case): `log_\[2/3\](1,000,000) = 35`. So not a lot.
+**HEY**: this is important. The term binary search implies that its performance comes from the fact that each iteration splits the search space in half. So what if we were to split it not in half, but 1/3 and 2/3? So for a binary tree of 1,000,000 items, the iterations is `log₂(1,000,000) = 20`. Taking 2/3 (worst case): `log_\[2/3\](1,000,000) = 35`. So not a lot.
 
 **The main lesson:** changing the base of the log does not affect the asymptotic complexity. The effectiveness of binary search comes from its logarithmic running time, not the base of the log.
 
