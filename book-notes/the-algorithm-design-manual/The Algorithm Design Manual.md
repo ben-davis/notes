@@ -508,7 +508,7 @@ Downside: cannot adjust their size in the middle of execution. We can compensate
 
 A better technique is to use dynamic arrays. These start with a given array size and double when we run out of space (when `i` == `j - 1` if `j` is the length of the array). This seems wasteful, but surprisingly is not.
 
-If we assume we start at an array of 1 and double until we get to `n`, it takes `ln(n)` (due to doubling every iteration) number of doubles until we get there. Plus 1 more when `i=n`. Each iteration involves `2ⁱ⁻¹` copy operations. So the complexity is given by the sum of `2ⁱ⁻¹` terms starting from `i=1` to `i=lg(n)`. This works out and simplified to `2n`. This means that each element is moved on average twice. ANd the total work in managing the array is `O(n)`, the same cost of allocated a fixed sized array.
+If we assume we start at an array of 1 and double until we get to `n`, it takes `ln(n)` (due to doubling every iteration) number of doubles until we get there. Plus 1 more when `i=n`. Each iteration involves `2ⁱ⁻¹` copy operations. So the complexity is given by the sum of `2ⁱ⁻¹` terms starting from `i=1` to `i=lg(n)`. This works out and simplified to `2n`. This means that each element is moved on average twice. And the total work in managing the array is `O(n)`, the same cost of allocated a fixed sized array.
 
 What we lose with dynamic arrays is the guarantee that an insertion is constant time in the *worst case*. But all accesses and *most* insertions will still be constant. What we get is a promise that the nth element insertion will be completed quickly enough to give `O(n)` total effort expended in managing the array. This is an example of *amortized* guarantees, which occur frequently in data structure analysis.
 
@@ -555,7 +555,7 @@ Advantages of static arrays:
 2. Efficient random access to items in arrays.
 3. Better memory locality and cache performance that random pointer jumping.
 
-Both can be though of as recursive structures:
+Both can be thought of as recursive structures:
 - *Lists*: Chopping the first element from a list leaves another list. Same or strings.
 - *Arrays*: Splitting an array gives two smaller arrays.
 
@@ -578,7 +578,7 @@ Certain dictionaries structures efficiently support other useful operations:
 1. *Max(D)* or *Min(D)*: Retrieve the item with the largest (or smallest) key from *D*. With this the dictionary can serve as a priority queue.
 2. *Predecessor(D, x)* or *Succcessor(D, x)*: Retrieve the item from *D* whose key is immediately before (or after) item *x* in *sorted* order. With this we can iterate through the dictionary in sorted order.
 
-Dicitonaries are often used for common data processing tasks. E.g. we could easily remove all duplicates names from a mailing list (construct the dictionary from the names (avoiding dupes by *search*), use *min* and *max* to iterate through using *successor*).
+Dictionaries are often used for common data processing tasks. E.g. we could easily remove all duplicates names from a mailing list (construct the dictionary from the names (avoiding dupes by *search*), use *min* and *max* to iterate through using *successor*).
 
 ### Implementing dictionaries via arrays
 Imagine we implement a dictionary via both an array and a sorted array. Below are the complexities of each operation:
@@ -613,6 +613,8 @@ It's obvious why the above are so, so I won't go into detail. Just note that `O(
 
 Most of these are self-explanatory, with the exception of those with an \*.
 
+Remember: these assume that one has `x` the actual node of the linked list to delete, insert, etc. That's why doubly-linked is O(1) - we can just use its `previous` pointer to update the linkage.
+
 1. \*Deletion: Because we need to correct the link of the prior node in the list, when deleting from a singly linked list we need to traverse the list to the find the predecessor.
 2. \*Maxmium: Usually for both singly and doubly linked list, we have to traverse the list to get to the tail, where the maximum lives. But we can maintain a pointer to the tail to, allowing O(1) for *Maxmimum(L)*. We just have to pay the maintenance cost on each insert and deletion to ensure the pointer remains up to date. For doubly linked lists this is O(1) as we just need to check if the `last` pointer's `last->next` is still `NULL` on inserts and change the `last->next` to `last->predecessor` if `last` is deleted. For singly linked lists, we just need to charge the cost to deletion operations. One linear sweep per deletion gives us constant time for max/min.
 
@@ -621,7 +623,7 @@ So far the data structures have had fast search or flexible updating, but not bo
 1. Unsorted, doubly linked lists support insertion and deletion in O(1) but search is linear in the worst case.
 2. Sorted arrays support binary search (log query times) but at the cost of linear updates.
 
-As binary search requires fast access to two element: median elements above and below the given node. Combining these ideas forms a linked list with two pointer nodes. This is the basic idea of binary search trees.
+As binary search requires fast access to two elements: median elements above and below the given node. Combining these ideas forms a linked list with two pointer nodes. This is the basic idea of binary search trees.
 
 A *rooted binary tree* is defined as being either empty or consisting of a node called the *root* along with two rooted binary trees called the left and right subtrees. Order of the subtrees matters.
 
@@ -738,7 +740,7 @@ Creating the node and linking it is `O(1)` but searching is `O(h)`.
 There are 3 cases:
 1. The node has no children: easy just remove it and unlink from the parent.
 2. The node has a single child: easy just remove it and link the parent to the deleted node's child.
-3. The node has two children: tricky, but there's an elegant solution: relabel the deleted node with the label of it's immediate success in sorted order. This is the left-most node in the right subtree of the node we're deleting. This results in a properly label tree.
+3. The node has two children: tricky, but there's an elegant solution: relabel the deleted node with the label of it's immediate successor in sorted order. This is the left-most node in the right subtree of the node we're deleting. This results in a properly label tree.
 
 It takes `O(h)` in the worst-case (the two children requires a search).
 
@@ -762,7 +764,7 @@ It's usual to exploit balanced search trees and their `O(lg(n))` behaviour by tr
 We often need to process items in a specific order. A job queue that ranks jobs in importance for example. Rather than using a regular array and resorting on each new job insertions, we can use the much more cost-effective *priority queue*.
 
 There are 3 primary operations:
-1. *Insert(Q, x)*: Give item *x*, insertt it into priority queue *Q*.
+1. *Insert(Q, x)*: Given item *x*, insert it into priority queue *Q*.
 2. *Find-Minimum(Q) / Find-Maximum(Q)*: Return a pointer to the item whose key is the smallest or largest among all keys.
 3. *Delete-Minimum(Q) / Delete-Maximum(Q)*: Remove the item whose key value is the min or max from Q.
 
@@ -775,7 +777,7 @@ Example: dating. New people are introduced into our lives but we rank them accor
 | Find-Minimum(Q) | O(1) | O(1) | O(1) |
 | Delete-Minimum(Q) | O(n) | O(1) | O(lgn) |
 
-The trick to getting `O(1)` on Find-Minimum is to store a pointer to the min. On insertion we can just update the current min pointer if it's lower. Then on deletion we just search for the new minimum. On unsorted arrays this is `O(n)` but for sorted it's `O1()` and balanced trees is `O(lgn)`.
+The trick to getting `O(1)` on Find-Minimum is to store a pointer to the min. On insertion we can just update the current min pointer if it's lower. Then on deletion we just search for the new minimum. On unsorted arrays this is `O(n)` but for sorted it's `O(1)` and balanced trees is `O(lgn)`.
 
 The other operations's cost is obvious.
 
@@ -783,7 +785,7 @@ The other operations's cost is obvious.
 ## 3.7 Hashing
 Hash tables are a very practical way to maintain a dictionary. It exploits the fact that with an index, lookup time in an array is constant.
 
-A hash function is a mathematical function that maps keys to integers, which are then used as the index. It's important that the hash function maps to exactly the number of indices we have in our dictionary. So to do accomplish that we must take the remainder: `hash mod size`. With a well chosen table size (should be a large prime) the resulting hash values should be fairly uniformly distributed.
+A hash function is a mathematical function that maps keys to integers, which are then used as the index. It's important that the hash function maps to exactly the number of indices we have in our dictionary. So to accomplish that we must take the remainder: `hash mod size`. With a well chosen table size (should be a large prime) the resulting hash values should be fairly uniformly distributed.
 
 ### Collision Resolution
 But obviously with taking the remainder, we provide the opportunity for collisions.
@@ -793,7 +795,7 @@ Assume table size is `m`.
 **For both these methods below, each item is stored along with its key.**
 
 There are two approaches to maintaining a hash table:
-1. *Chaining*: the hash table is an array of `m` linked lists (buckets). Each `ith` element contains all the items that hash to the value of `i`. If `n` keys are uniformly distributed in a table, each list will containy roughly `n / m` elements. A considerable amount of memory is used in this method to maintain all the pointers. That memory weould be better spent on increasing the size of the table and therefore collisions.
+1. *Chaining*: the hash table is an array of `m` linked lists (buckets). Each `ith` element contains all the items that hash to the value of `i`. If `n` keys are uniformly distributed in a table, each list will contain roughly `n / m` elements. A considerable amount of memory is used in this method to maintain all the pointers. That memory would be better spent on increasing the size of the table and therefore collisions.
 2. *Open addressing* maintains the hash table as a simple array of elements. The `ith` element contains the first element that was hashed to a given index. During insertion, if an item exists for a given hash, the array is sequentially probed for the next open slot. The same happens for searching. This is called *sequential probing*. There are other methods (double hashing, quadratic probing, etc). Deletion gets tricky as we have to make sure all items remain accessible. So we have to move all items of a given hash and reinsert them.
 
 Chaining and open address both cost `O(m)` to initialize an m-element hash table to null elements prior to insertion.
@@ -813,7 +815,7 @@ Here are the given expected and worst-case times for chained hash table with dou
 
 Some notes on this:
 - Deletion seems to be `O(1)` for one of two reasons not made clear in the book:
-  1. The item `x` is the item in the linked list *along with its next and prev* pointers. So deletion just involves fixes the linked list.
+  1. The item `x` is the item in the linked list *along with its next and prev* pointers. So deletion just involves fixing the linked list.
   2. The amortized cost is `O(1)` if the hash function has low-collision and the table size is sufficiently sized.
 - For traversing all elements, with chaining it's `O(n + m)` as each bucket needs to be traversed. For open addressing, it's `O(m)` as we just iterate over the flat array (the number of elements must be not more than the size of the table).
 
@@ -823,7 +825,7 @@ The key idea of hashing is to map a large obect (string, key, whatever) by a sin
 Example applications of duplicate detection:
 1. *Is a large document unique with a large corpus?*: Searching via the context is obviously impractical. Instead we can generate a hash of the document and use that to compare with the hash codes of all other documents.
 2. *Is part of this document plagiarized?*: As a single character will change a hash code of the whole document, we can instead generate hash codes from overlapping windows (substrings) within the document. We should make the length of the substring long enough to avoid chance collisions. The biggest downside: the hashtable is large. Later in the book we'll talk about how to create a well-chosen subset of hashcodes (min-wise hashing).
-3. *How can I convince you that a file isn't change?*: We can simply use cryptographic hashing to ensure that a given file is the same at some other point in time.
+3. *How can I convince you that a file hasn't change?*: We can simply use cryptographic hashing to ensure that a given file is the same at some other point in time.
 
 Although the worst-case of anything involving hashing is dismal, with a well-chosen hash function we can confidently expect good behavioour.
 
@@ -834,14 +836,14 @@ We can instead hash each word to a sorted string of its letters. That way all wo
 
 We can also use it to determine the list of letters that create the most words. Simply find the key with the greatest collisions. If we were to maintain a sorted list of the hash codes, then this becomes super simple.
 
-This is generally an example of *canonicalization*: reducing complication objects to a standard (canonical) form. Another example is stemming: removing the suffixes like -ed and -s or -ing from words.
+This is generally an example of *canonicalization*: reducing complicated objects to a standard (canonical) form. Another example is stemming: removing the suffixes like -ed and -s or -ing from words.
 
 ### Compaction
 Sorting a large number of objects with large values is slow. E.g. sorting a library of books by their actual content. Instead of that, we can instead hash the first say 100 words of each book and sort those. Then we just need to sort the books that collide. This is called *compaction*, also called fingerprinting, whose goal is to reduce the size of the objects we're dealing with.
 
 
 ## 3.8 Specialized Data Structures
-All the data structures so far represent an unstructed set of items designed for retrieval operations. There are data structures that are designed for a specific type of data:
+All the data structures so far represent an unstructured set of items designed for retrieval operations. There are data structures that are designed for a specific type of data:
 
 1. *String data structures*: Suffix trees/arrays are special data structures that preprocess strings to make pattern matching operations faster.
 2. *Geometric data structures*: Geo data typically consists of data points and regions. Regions in the plane are described by polygons, with a boundary of a closed chain of line segments. A polygon is described by a set of verts, with each consecutive pair of verts forming an a boundary of the polygon. Spatial data strucutures such as kd-trees organize points and regions by geometrics location to support fast search operations.
@@ -921,7 +923,7 @@ Heaps are a simple and elegant data structure for efficiently supporting the pri
 It can do this because heaps are essentially binary trees. Binary trees are often space-inefficient due to pointer storage, but due to the requirements of a selection sort (priority queue semantics), we can actually implement a binary tree using a simple array and so removing the need to follow pointers.
 
 A heap stores data as an array of keys, and use the position of the keys to *implicitly* play the role of pointers.
-The root is stored in the first position of the array, with its direct children (left and right), in the 2nd and 33rd positions. Generally: we store the `2ˡ⁻¹` keys of the `lth` level of a complete binary tree from left to right in positions `2ˡ⁻¹` to `2ˡ - 1`. We're assuming the array starts at 1 here to simplify. From this we have simple operations to get a key's children and parents based on its position: `k`'s children are at `2k` and `2k + 1` and the parent is at `k/2`.
+The root is stored in the first position of the array, with its direct children (left and right), in the 2nd and 33rd positions. Generally: we store the `2ˡ�����¹` keys of the `lth` level of a complete binary tree from left to right in positions `2ˡ⁻¹` to `2ˡ - 1`. We're assuming the array starts at 1 here to simplify. From this we have simple operations to get a key's children and parents based on its position: `k`'s children are at `2k` and `2k + 1` and the parent is at `k/2`.
 
 In order to maintain those operations above, we need to not have any holes in our tree. Normally it wouldn't matter, but here it's crucial. So for any given level, we have to pack every position with data, with the last level having all its data packed to the left. This means that for `n` nodes we only need an `n`-sized array.
 
@@ -3245,7 +3247,7 @@ Balanced trees use local *rotation* operations for restructuring, moving more di
 **Input description**: A set of records with totally ordered keys.
 **Problem description**: Build and maintain a data structure for providing quick access to the smallest or largest key in the set.
 
-Good for: storted events by time. They're called priotity queues because retrieval is done not based on insertion time (stack or a queue), nor by key match (dictionary), but by highest priority of retrieval. If no insertion happens after query, then just use an array sorted by priority.
+Good for: storted events by time. They're called priority queues because retrieval is done not based on insertion time (stack or a queue), nor by key match (dictionary), but by highest priority of retrieval. If no insertion happens after query, then just use an array sorted by priority.
 
 ### Implementations
 Choose from these based on whether you need other operations (searching for arbitrary keys, deleting keys, etc), do you need to know the maximum size up-front, or could the priority of an element change while in the queue.
@@ -3500,3 +3502,191 @@ Functionally, Fourier transforms provide a way to convert samples of a standard 
 3. **Convolution and deconvolution**: A convolution is the pairwise product of elements from two different sequences, such as in multiplying two n-variable polynomials f and g or comparing two character strings. Direct comparison is O(n²) but the fast fourier transform is O(nlgn). Another use: image processing. It takes the original signal from an image scanner and turns it into a Gaussian point-spread functin.
 
 FFT is so important that's its usually implemented in hardware for signal-processing systems.
+
+# Chapter 17 - Combinatorial Problems
+Combinatorial problems are those that deal with discrete objects, as oppposed to numerical problems that deal with continuous numbers. Combinatorial are effectively counting problems, whereas numerical are calculation problems.
+
+Combinatorial problems include sorting and searching and deal with combinatorial objects like partitions, subsets, calendars, and schedules.
+
+## 17.1 Sorting
+**Input description**: A set of n items.
+**Problem description**: Arrange the items in increasing order.
+
+Sorting is the most fundamental algorithmic problem in computer science. Sorting proves to be the first step in solving a host of other algorithm problems. Indeed, “when in doubt, sort” is one of the first rules of algorithm design.
+
+How to decide which sorting algorithm to use:
+1. *How many keys to sort?*: If you have < 100 keys, it doesn't matter which quadratic algorithm you use, e.g. insertion sort or bubble sort. If you have > 100, it'll become increasingly important to use an O(nlgn) algorithm like heapsort, quicksort, or mergesort. Which you use doesn't matter all that much.
+
+Beyond something like 100,000,000 keys, it's important to use an external-memory sorting algorithm that minimize disk or network access.
+
+2. *Duplicate keys?*: If all items are unique then we have a completely defined sorted order. But if not, something must determine which duplicate key comes first. Sometimes this matters. Ties can be broken by considering some other information like last name. Alternatively the items initial position in the data set can be used. This is a *stable* sorting algorithm: it preserves the original ordering in case of ties. Most of the quadratic algorithms are stable, but many O(nlgn) are not. If stability is important, it's usually best to use the initial position as a secondary sorting key rather than trusting the algorithm's stability.
+
+3. *What do you know about your data?*: Information about your data could help achieve performance > O(nlgn).
+  - *Already sorted?*: If so, some algorithms like insertion sort perform better than they otherwise would.
+  - *Do you know the distribution of keys?*: If the keys are randomly or uniformly distributed, a **bucket** or **distribution** sort makes sense.
+  - *Are the keys long or hard to compare?*: For long strings, it's important to use a small prefix for an initial sort and then use the full text when resolving ties. Another option: **radix sort** which takes time linear in the number of characters in the file.
+  - *Small range of possible keys?*: If you want to sort a subset of some range over `n`, say `n / 2` distinct integers, the fastest algo would be to initialize an n-element bit vector, turn on the bits corresponding to the keys, then scan left to right and report positions with true bits.
+
+4. *Disk access?*: If the data is too large to keep in memory, we need *external sorting*. This used to mean tapes, but now means virtual memory that will need to be swapped. Bad algos spend most of their time swapping. The simplest approach for external sorting loads the data into a B-tree, and then does an in-order traversal of the tree to read the keys in sorted order. Highest performing algos are based on *multiway-mergesort*.
+
+Quicksort is the best internal sortin algorithm. But it requires tuning to achieve peak performance, so it can be hard to implement. Best to use a library function.
+
+## 17.2 Searching
+**Input description**: A set of n keys S, and a query key q.
+**Problem description**: Where is q in S?
+
+"Searching" can mean many things. Searching for a global max or min of a function is the problem of *unconstrained optimization*. Here we're considering just the searching of a key in a list, array, or tree.
+
+It also sounds similar to dictionaries. But dictionaries require efficient insertion and deletion, whereas searching is strictly about acccess. And when you don't need to consider insertion and deletion, simpler and more efficient algorithms for search arise.
+
+There are two basic approaches to search: sequential and binary search.
+
+#### Sequential
+Simply start at the beginning and iterate through comparing each item to a query string.
+
+#### Binary Search
+1. Started with a sorted array of keys.
+2. Start the search in the middle `n/2`.
+3. If `n[n/2] == q`, then we found our element.
+3. If `n[n/2] < q`, then use the right half.
+4. If `n[n/2] > q`, then use the left half.
+5. Repeat until we find it or we've exhausted `n`.
+
+Sequential is the simplest and likely to be the fastest up to twenty elements (as we don't have to sort). Beyond (say) 100, binary search will be faster.
+
+Some things to consider:
+1. Implementing binary search is tricky. Apparently it tooks 17 years after it was discovered until a paper was published.
+2. Think about access patterns. If it's known that some elements occur much more frequently (say "the" in the English language), can we build the array such that those elements are near the beginning? For binary search, it's more tricky. We have to use dynamic programming to build a *optimal binary search tree*.
+3. Does access frequency change over time? If so we should opt for a self-organizing list, where positions change according to access frequency. This can be easier than knowning access patterns ahead of time. The best self-organizing schemes are move-to-front, where upon access an element is moved to the front. No need to track accesses. Self-organizing lists also explot *locality of reference*, since accesses to any given key are likely to occur in clusters. So even if other keys have been accessed more in the past, the hot key will be at the front, so any future references (which are likely due to locality of reference) will hit it first. Self-organization of binary trees can be achieved using *splay trees*.
+4. Is the key close by? If so a one-sided binary search might be better. It starts at the beginning and searches elements at successfully larger intervals (p + 1, p + 2, p + 4, etc). Once we've found the window, we can use binary search again on that window. One-sided will find an element at position p + l in at most 2[lgl] comparisons. So it's much faster than binary search when l << n.
+5. External memory? Binary search is terrible when parts of the data set exist on disk. The random accesses guarantees we'll page frequently. Much better are B-trees (similar to binary trees but are constructed in a page-sized clusters to minimize disk access).
+6. Can I guess the key should be? Like a phone book. So if you know for sure where a key should be roughly, then it can be faster that binary search, but not by much. Generally not worth it as the algorithm produced will be brittle.
+
+## 17.3 Median and Selection
+**Input description**: A set of n numbers or keys, and an integer k.
+**Problem description**: Find the key greater than or equal to exactly k of the n keys.
+
+Finding the median is a more general *selection* problem, which seeks the *kth* element in sorted order. Selection arises in several applications:
+
+1. *Filtering outlying elements*: With noisy data, it's good to throw out the 10% largest and smallest values. Selection can be used to find the elements at the 10th and 90th percentiles.
+2. *Identifying the most promising candidates*: E.g. a chess program identifying the all possible next moves, then filtering the top 25%. This is selection followed by filtering.
+3. *Deciles and related  divisions*: Useful for many statistical applications. Just selection on those boundaries.
+4. *Order statistics*: Finding the smallest, largest, and the mediam element.
+
+Finding the mean can be done in linear time. But the median is harder.
+
+Approaches to find the median (and selection in general):
+
+1. **How fast?**: If we don't care, just sort the array and return `n[n/2]`. That'll be `O(nlgn)`. But we can do better if we just want the median: *quick-select* which is based on *quicksort*. We select a random element and use that as a pivot to split the array into sets left and right of the pivot. From the size of the subsets we know the position of the pivot in the sorted array and therefore whether the median is to the right or left. Now we repeat (recur) on the appropriate subset until it converges on the median (where the subsets are equal), which will take on average O(lgn) iterations. This defines a geometric series that converges to a linear-time algorithm, although it can take O(n²) in the worst-case.
+2. *What if we can't repeatedly access the data?*: This is the case for external data. In that case we should probably sample the data down to a managable size by randomly removing data. The median of the resultant data set probably reflects the original.
+3. *What about mode?*: The best solution is to sort in O(nlgn), then do a linear sweep, getting O(nlgn) in total. We can also do expected linear time using hashing, but no worst-case linear time algo exists. Remember: testing element uniqueness via hashing (like Python dictionaries) is expected constant, but has a worst-case O(nlogn).
+
+## 17.4 Generating Permutations
+**Input description**: An integer n.
+**Problem description**: Generate (1) all, or (2) a random, or (3) the next permutation of length n.
+
+Permutation: an ordering of items. Many problems seek the best ordering of items: traveling salesman (least cost to visit n cities), bandwidth (min the longest edge to max throughput), and graph isomorphism (order the verts of one graph so its the same as another).
+
+There are n! permutations of n items. This quickly gets out of hand. E.g. 15! = 1,307,674,368,000.
+
+Fundamental to any permutation-generating algorith is order - the order in which the permutations are constructred. Logically lexographically feels right (123, 132, etc vs 321), but often it has no advantage. In fact non-lexo can be faster and simpler.
+
+There are two paradigms for constructing permutations: ranking/unranking and incremental change methods. The latter is more efficient, but the former can be applied to a wider range of problems.
+
+### Ranking and Unranking
+
+Ranking and unranking works by defining two functions that:
+1. Return an index (position) in the generated permutations for a single permutation and return a permutation given an index, respectively.
+2. Are the inverse of each other.
+
+How the two functions provide their answers matter less than them being the inverse.
+
+With that we can:
+1. *Sequence permutations*: To get the next permutation after *p*, we Rank(p), add 1, then Unrank(p). Counting through 0 - n! - 1 and unranking them is equivalent to generating all permutations.
+2. *Generating random permutations*: Select a random int and unranking provides a unique permutation.
+3. *Keep track of a set of permutations*: We can use an n-sized bit vector to track whether a given permutation has been generated by looking up its rank.
+
+Once n! becomes too large, rank/unrank becomes unmanageable.
+
+### Incremental Change
+Works by defining the *next* and *previous* operations to transform one perm to another, usually by swapping elements. The trick is define the function in a way that it doesn't duplicate permutations until after all n! have been generated.
+
+If done correctly, they are typically constant independent of the size of the permutation.
+
+## 17.5 Generating Subsets
+**Input description**: An integer n.
+**Problem description**: Generate (1) all, or (2) a random, or (3) the next subset of the integers {1,...,n}.
+
+A subset describes a selection of objects, where the order does among them does not matter (combinations). Many problems seek this: *vertex cover* (smallest siubset of verts that touch each edge), *knapsack* (most profitable subset of items of bounded total size), and *set packing* (smallest subset of subsets that together cover each item exactly once).
+
+There are 2ⁿdistinct subsets of an n-element set, including the empty set + the set itself. This grows expontentially, but at a considering slower rate than the n! permutations of n items. E.g. a brute-force search through all subsets of 20 elements is manageable (2²⁰ = 1,048,576). But beyond that we'd start to hit limits.
+
+Although by definition order among subsets doesn't matter, we should define our sets in sorted or canonical order to speed up ops like testing whether two subsets are equal.
+
+As with permutations, the key to generating them is in establishing a numerical sequence among all 2ⁿsubsets. We have three options:
+
+1. *Lexicographic order*: This means sorted and often the natural way to generate combinatorial objects. But it's suprisingly difficult to generate subsets in lexicographic order, so if don't have to, don't.
+2. *Gray code*: A sequence (called minimum change order) in which adjacent subsets differ by a single insertion or deletion. Generating subsets this way can be extrememly fast as it has a nice recursive structure.
+3. *Binary counting*: This is the simplest method. It's based on the observation that as any subset is made up of elements in the main set, then we can represent that subset as a binary string of size `n`, where `n` is the size of set, with 1s set for each `i`th bit if the `i`th element of the set is in the subset. This allows us to simply count from 0 to 2ⁿ- 1 in binary, mask of each successive bit to get all the 1s in the string, and use those to compose the subset. The ranking and unranking functions here are obvious.
+
+Generation problems often arise in two related problems:
+1. *K-subsets*: We may only be interested in the subsets containing exactly k elements. There are only n choose k subsets, way less than 2ⁿ. The best way to construct all k-subsets is in lexicographic order. The ranking function is based on the observation that there are ((n-f)/(k-1)) k-subsets whose smallest element is f. With this we can get the smallest element in the mth k-subset of n items, then recur for subsequent elements of the subset. (I need more examples to understand this.)
+2. *Strings*: Generating all subsets is equivalent to generating all 2n strings of true and false. The same basic techniques apply to generate all or random strings on alphabets of size α, except there will be αn strings in total.
+
+## 17.6 Generating Partitions
+**Input description**: An integer n.
+**Problem description**: Generate (1) all, or (2) a random, or (3) the next integer or set partitions of length n.
+
+Two different types of partitions: integer partitions and set partitions:
+1. *Integer partitions*: multisets of non-zero integers that add up exactly to n.
+2. *Set partitions*: divides the elements {1,...,n} into non-empty subsets. E.g. n = 4: {1234}, {123,4}, {12,34}, etc. Algos that return set partitions include vertex/edge coloring and connected components.
+
+#### Integer Partitions
+Integer partitions grow exponentially with n, but at a slow rate. E.g. there are 627 partitions of n = 20. The easiest way to generate them is to construct in lexicographically decreasing order:
+1. Start with {n}
+2. Then generally, subtract 1 from the smallest part that is > 1 and add a 1 to the set
+3. Then collect all 1's so as to match the new smallest part > 1, potentially leaving a 1.
+
+E.g. {4,3,3,3,1,1,1,1} becomes {4,3,3,2,2,2,1} as the five 1’s left after 3 − 1 = 2 are packed into 2,2,1.
+
+Random partitions generation is tricky. We have to use recursion. Check the book if I need to do this.
+
+#### Set Partitions
+Set partitions are generated uses a restricted growth function. Each new element aᵢis defined by a function that ensures that each distinct digit identifies a subset, or block, of the partition, while the growth condition ensures that the blocks are sorted into a canonical order based on the smallest element in each block. 
+
+This is obviously a bit tricky. Come back to make this more clear.
+
+## 17.7 Generating Graphs
+This one seems not interesting enough to write about.
+
+## 17.8 Calendrical Calculations
+Again, not interesting enough.
+
+## 17.9 Job Scheduling
+**Input description**: A directed acyclic graph G = (V, E), with vertices representing jobs, and edge (u, v) implies task u must be done before task v.
+**Problem description**: Which schedule of tasks completes the job using the minimum amount of time or processors?
+
+This problem arises in many places: scheduling tasks on a CPU, assinging tasks to workers, etc. There are other problems that have connections to scheduling:
+
+1. *Topological sort*: constructs a schedule consistent with precedence constraints in a DAG.
+2. *Bipartite matching*: assigning jobs to workers with appropriate skills for them.
+3. *Vertex/edge coloring*: assigns jobs to tiem slots such that no two interefering jobs are assigned the same slot.
+4. *Traveling salesman*: identifies the most efficient delivery route to visit a given set of locations.
+5. *Eulerian cycle*: defines the most efficeint route for a snowplow or mailmain to traverse a given set of edges.
+
+Let's concern ourselves with scheduling problems for DAGs. Let's suppose we have a big job broken into a number of smaller tasks, each of which we know how long should take. Also suppose there are some number of dependency rules between these subtasks. The fewer constraints, the tighter the schedule. The constraints must define a DAG.
+
+Several problems on these task networks are interesting:
+1. *Critical path*: The longest path from start to end defines the minimum possible completion time. The only way to total time is to reduce a task on the critical path. The critical path can be determined in O(n + m).
+2. *Minimum completion time*: Depends on dependency constraints. If there were none and we had unlimited workers, then the total time would equal the length of the longest task. In the opposite case, where there's dependency between each successive task, then total time is equal to the sum of all task times. The minimum completion time is found via the critical path and so is O(n + m).
+
+Some scheduling problems involve constraints that may be difficult or impossible to model using these techniques (e.g. keeping Ada and Katherine apart so they won't kill each other). There are two ways to deal with such esoteric constraints:
+
+1. Ignore them until the end, and then modify the schedule to account for them.
+2. Use linear-integer programming to model the problem in all its complexity.
+
+When there are no constraints, we have a *job-shop scheduling* problem and can be modelled using bin packing.
+
+
+## 17.10 Satisfiability
+Super interesting, but not common enough for me to make notes.
