@@ -886,7 +886,7 @@ Basically the end result is that the sorting the small array is fastest.
 For the given problems, let's compare sorting with hashing:
 1. *Searching*: Hash tables are great here as they allow searching in constant expected time, instead of `O(logn)` with binary search.
 2. *Closest pair*: Hash tables can't help as normal hash functions scatter keys around the table.
-3. *Element uniqueness*: Hashing is even faster than sorting. Build the hash using chaining, then check for duplicates within a given hash's bucket. No duplicates in the bucker => no duplicates at all.
+3. *Element uniqueness*: Hashing is even faster than sorting. Build the hash using chaining, then check for duplicates within a given hash's bucket. No duplicates in the bucket => no duplicates at all.
 4. *Finding the mode*: This isn't great; it's linear expected-time. We have to search each bucket and count elements within it.
 6. *Finding the median*: Hashing is no good here. The median might be in any bucket, so we have to do it manually.
 
@@ -918,12 +918,13 @@ But we have to iterate through the list each time to find the next smallest item
 This is the *heapsort*: a selection sort with a better data structure.
 
 ### Heaps
-Heaps are a simple and elegant data structure for efficiently supporting the priority queue operations *insert* and *extract-min*. They work by maintaining a partial order of its elements that is weaker than sorted (so it's efficient) but strong than random (so it's quick to find the min).
+Heaps are a simple and elegant data structure for efficiently supporting the priority queue operations *insert* and *extract-min*. They work by maintaining a partial order of its elements that is weaker than sorted (so it's efficient) but stronger than random (so it's quick to find the min).
 
 It can do this because heaps are essentially binary trees. Binary trees are often space-inefficient due to pointer storage, but due to the requirements of a selection sort (priority queue semantics), we can actually implement a binary tree using a simple array and so removing the need to follow pointers.
 
 A heap stores data as an array of keys, and use the position of the keys to *implicitly* play the role of pointers.
-The root is stored in the first position of the array, with its direct children (left and right), in the 2nd and 33rd positions. Generally: we store the `2ˡ�����¹` keys of the `lth` level of a complete binary tree from left to right in positions `2ˡ⁻¹` to `2ˡ - 1`. We're assuming the array starts at 1 here to simplify. From this we have simple operations to get a key's children and parents based on its position: `k`'s children are at `2k` and `2k + 1` and the parent is at `k/2`.
+
+The root is stored in the first position of the array, with its direct children (left and right), in the 2nd and 3rd positions. Generally: we store the `2ˡ�����¹` keys of the `lth` level of a complete binary tree from left to right in positions `2ˡ⁻¹` to `2ˡ - 1`. We're assuming the array starts at 1 here to simplify. From this we have simple operations to get a key's children and parents based on its position: `k`'s children are at `2k` and `2k + 1` and the parent is at `k/2`.
 
 In order to maintain those operations above, we need to not have any holes in our tree. Normally it wouldn't matter, but here it's crucial. So for any given level, we have to pack every position with data, with the last level having all its data packed to the left. This means that for `n` nodes we only need an `n`-sized array.
 
@@ -936,7 +937,7 @@ We also can't easily do other operations normally used with a binary tree like m
 We need to both fill the entire tree but also maintain the rule that any parent dominates its children. This is the only rule, the relationship between the children is irrelevant.
 
 To do this:
-1. Insert each item to the left-most open space in the arra.y
+1. Insert each item to the left-most open space in the array.
 2. If the new element has the wrong relationship with its parent, swap them.
 3. Then check the new parent with its parent, recursively until we're at the root. This bubbles up ensuring that the tree is properly organized.
 
@@ -982,12 +983,12 @@ Instead notice that the smallest overall item must sit at the top of either of t
 
 As each level's merge requires `n` comparisons, the overall complexity is the product of `n` comparisons at each level by the total number of levels. `n` is halved at each level so the complexity is `O(nlogn)` in the worst-case.
 
-Mergesort is great for sorting linked lists as it does not rely on random access to elements like heapsort and quicksort. Primary disadvantage: the auxiliary buffer required when soting arrays.
+Mergesort is great for sorting linked lists as it does not rely on random access to elements like heapsort and quicksort. Primary disadvantage: the auxiliary buffer required when sorting arrays.
 
-**Mergesort is a class divide-and-conquer algorithm**. The trick in reducing a complex problem to smaller chunks is ensuring the resolution of the those subproblems is efficient, as it is with the merge in mergesort.
+**Mergesort is a classic divide-and-conquer algorithm**. The trick in reducing a complex problem to smaller chunks is ensuring the resolution of the those subproblems is efficient, as it is with the merge in mergesort.
 
 ### Implementation
-A crucial concern with the merge in mergesort is ensuring we don't overrwrite data of each of the arrays. So we'll need to use a buffer.
+A crucial concern with the merge in mergesort is ensuring we don't overwrite data of each of the arrays. So we'll need to use a buffer.
 
 ## 4.6 Quicksort
 Quicksort is similar to mergesort in that it's a recursive algorithm that works by repeatedly splitting the array into smaller subarrays.
@@ -1014,7 +1015,7 @@ Careful analysis shows that the average height after *n* insertions is approxima
 ### Randomization
 The above analysis makes the assumption that `p` is chosen randomly. But in the code presented in the book, `p` is chosen by selecting the last element of the array. If the array comes with some biased sort order, then we're not getting our randomness guarantees. Suppose instead we spent `O(n)` time pre-randomizing the array. Well then we're guaranteed our `O(nlogn)`.
 
-Generally *randomization* is a great technique to improve algorithms with terrible worst-case but good average-case. It makes them more robust to boundary cases and efficient on highly structured input instances that cofound heuristic decisions.
+Generally *randomization* is a great technique to improve algorithms with terrible worst-case but good average-case. It makes them more robust to boundary cases and efficient on highly structured input instances that confound heuristic decisions.
 
 Here's some basic approaches to randomized algorithms:
 1. *Random sampling*: Want to get the median of a set but have neither the time not space to do it properly? Take a small random sample and calculate the median of that. The result should be representative of the full set. This is essentially what opinion polling is. The key is selecting truly random samples.
@@ -1024,7 +1025,7 @@ Here's some basic approaches to randomized algorithms:
 ### Is Quicksort really fast?
 The question is it faster than heapsort and mergesort, all of which have `O(nlogn)`. We can't do this analysis using Big Oh and the RAM model as their too coarse. When algorithms have the same asymptotic complexity, the implementation details start to matter.
 
-For quicksort, it's proved to be 2 to 3 times faster than mergesort or heapsort. The primary reason is the operations in the innermost loop are more simply. So less cache lookup, less procedure calls, etc. It's also an in-place algorithm so there's no memory overhead.
+For quicksort, it's proved to be 2 to 3 times faster than mergesort or heapsort. The primary reason is the operations in the innermost loop are more simple. So less cache lookup, less procedure calls, etc. It's also an in-place algorithm so there's no memory overhead.
 
 ## 4.7 Distribution Sort
 Say we have an address book we want to sort. We could partition the names based on the first letter of the last name. We now have 26 piles. All we need to do is sort the piles and concatenate and boom: sorted names. Assuming even distribution among the names, each of the 26 piles should be far smaller than the original list. Now we can partition again on the 2nd letter of the last name. We keep doing that until we have a lists with only a single name.
@@ -1038,7 +1039,7 @@ We can give guarantees on data structures like balanced binary trees, but no suc
 ### Lower bounds on sorting
 So far we've spoken only about the upper bounds of sorting algorithms, which are often `O(logn)`, but none are linear `O(n)`. Could it be possible?
 
-Well sorting `n` elements requires at least looking at them all so our lower bound has to be `Ω(n)`. What about the upper bound? Well it order for sorting to actually do it's job each inspect of `n` needs to be at least a comparison with something else, as if we did exactly the same operation for each of `n`, we couldn't possibly be doing anything useful.
+Well sorting `n` elements requires at least looking at them all so our lower bound has to be `Ω(n)`. What about the upper bound? Well in order for sorting to actually do it's job each inspect of `n` needs to be at least a comparison with something else, as if we did exactly the same operation for each of `n`, we couldn't possibly be doing anything useful.
 
 We can think of all possible executions of pairs of `n` but considering a tree with `n!` leaves, where each leaf represents a unique permutation. The minimum height of this tree represents the faster algorithm and it turns out it's `lg(n!) = θ(nlogn)`.
 
@@ -1689,7 +1690,7 @@ Some rules:
 1. *Efficiency*: We must not visit and vertex/edge more than once.
 2. *Correctness*: We must visit every vertex/edge once.
 
-The behind graph traversal is to just keep track of each vertex we have visited using one of three states:
+The secret behind graph traversal is to just keep track of each vertex we have visited using one of three states:
 1. *Undiscovered*: initial state
 2. *Discovered*: vertex found but we have not checked all incident edges
 3. *Processed*: all vertex edges have been visited
