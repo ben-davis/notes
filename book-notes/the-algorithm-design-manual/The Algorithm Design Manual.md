@@ -1053,7 +1053,7 @@ Whenever merging the smaller parts of a bigger problem is more efficient than so
 Examples of divide and conquer: mergesort, the Fourier transform, Strassen's matrix multiplication algorithm.
 
 ## 5.1 Binary Search and Related Algorithms
-Binary search is the key divide-and-conquer algorith. It's a fast algorithm for searching in a sorted array of keys `S`. To search for `q` we compare it to the middle key `S[n/2]`. If `q < S[n/2]` then its in the left-side of the array, otherwise it's the right. We repeat this process on each subset. It means we find the right answer in a total of `lg(n)` comparisons - much better than n/2 expected if we did sequential search.
+Binary search is the key divide-and-conquer algorithm. It's a fast algorithm for searching in a sorted array of keys `S`. To search for `q` we compare it to the middle key `S[n/2]`. If `q < S[n/2]` then its in the left-side of the array, otherwise it's the right. We repeat this process on each subset. It means we find the right answer in a total of `lg(n)` comparisons - much better than n/2 expected if we did sequential search.
 
 ```c
 int binary_search(item_type s[], item_type key, int low, int high) {
@@ -1078,11 +1078,11 @@ int binary_search(item_type s[], item_type key, int low, int high) {
 ```
 
 ### Using Binary Search to Count Occurences
-As binary search allows us to find a key quickly, naturally we can use it to count occurences of a given key within a sorted array. The simple method would be to find the key, then seqentially scan left and right to find the boundaries. However this leads to `O(ln + s)` where `s` is the length of occurences.
+As binary search allows us to find a key quickly, naturally we can use it to count occurences of a given key within a sorted array. The simple method would be to find the key, then seqentially scan left and right to find the boundaries. However this leads to `O(lgn + s)` where `s` is the length of occurences.
 
 Instead we can modify the original binary search so that instead of returning the index when the key is found `s[middle] == key`, we instead let it run. It'll then keep moving right until it finds the right boundary. We can reverse the condition (`s[middle] > key`) to find the left boundary. This will be `O(lgn)`.
 
-Another solution: search of the keys `k - e` & `k + e` where `e` is some small constant such that it resolves to a key that is the prev/next key in the sorted list. That way we know that finding this key represents the boundary. Presumably this fails if there happens to not be an instance of that key in the array.
+Another solution: search for the keys `k - e` & `k + e` where `e` is some small constant such that it resolves to a key that is the prev/next key in the sorted list. That way we know that finding this key represents the boundary. Presumably this fails if there happens to not be an instance of that key in the array.
 
 ### One-Sided Binary Search
 Say we have a run of 0s then an unbounded run of 1s and we want to find the transition point `p`. If we had a bound on the array size, then we could use binary search as above.
@@ -1092,7 +1092,7 @@ Without a bound, we can instead repeatedly test at larger intervals (`A[1]`, `[2
 ### Square and Other Roots
 We can use binary search to find the square root of a number.
 
-For any number `n` > 1, the root is `>= 1` and `<= n`. So `1` and `n` are our bounds for binary search. If the swuare of the midpoint `m` is great that `n`, then we continue in the left-half, otherwise we countinue in the right-half. It will find it in `lgn` rounds to within +-1/2.
+For any number `n` > 1, the root is `>= 1` and `<= n`. So `1` and `n` are our bounds for binary search. If the square of the midpoint `m` is great that `n`, then we continue in the left-half, otherwise we countinue in the right-half. It will find it in `lgn` rounds to within +-1/2.
 
 The same can be done for finding roots of a polynomial equation.
 
@@ -1179,7 +1179,7 @@ parition size = n                     /x              vertex degree = a  │
 ## 5.5 Fast Multiplication
 There are two ways we're taught how to do multiplication:
 1. Add A lots of B: `O(n · 10ⁿ)` to multiple two n-digit base-10 numbers
-2. Digit by digit: So 121 * 541 = 121 * 1 + 121 * 40 + 121 * 500 = 65,461. Assuming we perform each real digit-bydigit product (knowing that 121 * 40 is really just 121 * 4 with some digits moved to the correct place) by looking it up in a times table, this algorith multiplies two n-digit numbers in `O(n²)`.
+2. Digit by digit: So 121 * 541 = 121 * 1 + 121 * 40 + 121 * 500 = 65,461. Assuming we perform each real digit-bydigit product (knowing that 121 * 40 is really just 121 * 4 with some digits moved to the correct place by looking it up in a times table, this algorith multiplies two n-digit numbers in `O(n²)`.
 
 But wait for it, there's an even faster method using divide-and-conquer. Suppose that each number has `n = 2m` digits. Well we can split `2m` and work on them independently. Asusume `w = 10ᵐ⁺¹` (essentially padding with zeroes) and represent `A = a₀ + a₁w` and `B = b₀ + b₁w`, where `aᵢ` and `bᵢ` are the pieces of each respective nummber, then:
 
@@ -1229,7 +1229,7 @@ ClosestPair(A, l, r)
 ```
 This doesn't have a termination condition?? I don't get it.
 
-But apparently: this does contant work per call, so it's recurrence is: `T(n) = 2 · T(n/2) + O(1)`, which is case 1 of the theorem, so `T(n) = Θ(n)`. This can be extended to two dimensions to get `Θ(n log n)`.
+But apparently: this does constant work per call, so it's recurrence is: `T(n) = 2 · T(n/2) + O(1)`, which is case 1 of the theorem, so `T(n) = Θ(n)`. This can be extended to two dimensions to get `Θ(n log n)`.
 
 ## 5.7 Parallel Algorithms
 Divide-and-conquer is ideal for parallelization. If we can partition our problems into `p` equal-sized parts, then `O(n)` necomes `O(n/p)` plus whatever it costs to combine the results.
@@ -1267,9 +1267,9 @@ Convolution multiplies every possible pair of elements of A and B, so we'd expec
 
 
 ### Applications
-`n²` -> `nlogn` is a huge win. So it's important to recognize when we're dealing with a convolution. They often arise when trying all possible ways of doing things that up to `k`, for a large range of values of `k`, or when sliding a mask or pattern `A` over a sequence `B` and calculating each position.
+`n²` -> `nlogn` is a huge win. So it's important to recognize when we're dealing with a convolution. They often arise when trying all possible ways of doing things that add up to `k`, for a large range of values of `k`, or when sliding a mask or pattern `A` over a sequence `B` and calculating each position.
 
-1. *Integer multiplication*: Any integer can be considered a polynomial in base `b`. E.g 632 = 6·b² + 3 · b¹ + 2 · b⁰, where b = 10. So integer multiplication acts like integer multiplication without the carry. Using fast convultions allows multiplication even faster than that clever algorithm mentioned before. There are two ways to deal with the carry, but both easy. But anyway: `O(nlogn)`.
+1. *Integer multiplication*: Any integer can be considered a polynomial in base `b`. E.g 632 = 6·b² + 3 · b¹ + 2 · b⁰, where b = 10. So polynomial multiplication acts like integer multiplication without the carry. Using fast convultions allows multiplication even faster than that clever algorithm mentioned before. There are two ways to deal with the carry, but both easy. But anyway: `O(nlogn)`.
 2. *Cross-correlation*: For two times series A and B, the cross-correlation function measures the similarity as a funtion of the shift or displacement of one relative to the other. So we could look at sales and advertising expenditures to find correlation. It's defined as convolution of A over forward-shifted B.
 3. *Moving average filters*: Often we want to smooth out a window within a time series by averaging over the window. E.g. C[i−1] = 0.25B[i−1]+ 0.5B[i]+0.25B[i+1] over all positions i. This is just another convolution. Where A is the vector of weights within the window around B[i].
 4. *String matching*: The algorithm given before is `O(nm)`. But as the string matching works by moving a subset window over the larger string, we can think of this as convolution. Specifically we can define each character within the string as a bit vector of its alphabet (so in the alphabet {A,B}, A = `10` and B = `01`). Combining these bit vectors gives us a bit vector of the string and the pattern. The dot product over a window will indicate whether the substring matches at a given position.
